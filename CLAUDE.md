@@ -9,7 +9,7 @@ Site files: `index.html` (self-contained), `masar_story.mp4` (720p story video),
 ## What Masar is
 
 - A smart, interactive evacuation guidance system for factories and other changing workplaces (construction sites, warehouses, tunnels).
-- Wireless, portable LED dot-matrix screens hang from the ceiling and show live arrows. Each screen leads to the next screen, turn by turn, until the safe assembly point.
+- Wireless, portable LED dot-matrix screens stand on the ground (weighted base, two legs, sun hood, high-brightness two-sided face readable in sunlight) and show live arrows. Each screen leads to the next screen, turn by turn, until the safe assembly point.
 - The safety manager changes the assembly point from a control panel with one click, and every screen re-syncs automatically.
 - Several fire detectors (heat and smoke) work together, and the overlap of their readings pinpoints the fire zone. Screens near the fire show a red X, and the route is recalculated around the fire.
 - Fail-safe: if the connection drops, every screen falls back to its pre-approved default route. Each screen has a battery.
@@ -34,7 +34,7 @@ Site files: `index.html` (self-contained), `masar_story.mp4` (720p story video),
 ## Hard rules for any change
 
 1. Arabic is the default language and must always be right-to-left. English is a toggle.
-2. The main story setting is a production factory. Construction sites, warehouses and tunnels are listed as other places Masar can be used.
+2. Masar is for changing workplaces: the simulator shows a construction site (default map) and a factory (second example). Warehouses and tunnels are other places it can be used.
 3. Never show a headcount or "X/18 people out" anywhere.
 4. Never invent statistics. Every market or price figure keeps a visible «تقدير» / "estimate" label. Official figures keep their source.
 5. Do not claim regulations mandate Masar. Say it is a technical way to strengthen compliance with escape-route requirements.
@@ -46,54 +46,39 @@ Site files: `index.html` (self-contained), `masar_story.mp4` (720p story video),
 
 Wrapper: `<div class="page" id="page" dir="rtl" lang="ar" data-lang="ar">`. Bilingual text uses paired elements with classes `ar` / `en`, and CSS hides the inactive language (`.page[data-lang="ar"] .en{display:none}`). Dynamic strings in JS use `T(arabic, english)`. The language choice is kept in `localStorage` key `masar-lang`. The toggle button is `#langBtn`.
 
+Purpose: a demonstration of the idea, not the pitch deck. Keep text minimal; detailed figures live in the slides.
+
+Design world: "the sign is the interface". Brand Paper page; wine-gradient hero and footer with rose stripes; the simulator runs full width on an always-dark "control room" stage with a 4-part console under the map. No sticky nav.
+
 Sections in order (ids):
 
-1. Hero with an animated LED sign
-2. Sticky nav
-3. `#story` — video `masar_story.mp4` with `poster.jpg`
-4. `#problem`
-5. `#solution`
-6. `#sim` — simulator
-7. `#how` — 4 steps plus 4 component cards
-8. `#compare` — today vs Masar table, plus competitors table rendered from the JS array `comp`
-9. `#market` — TAM/SAM/SOM funnel plus pricing table
-10. `#regs`
-11. `#municipal` — Balady permit → Masar site → municipal dashboard flow, 574K permits stat, where-it-applies chips
-12. `#prototype` — demo kit plus a photo placeholder saying «قريباً»
-13. `#plan` — roadmap
-14. `#faq` — rendered from the JS array `faqs`
-15. Footer `#contact` — logo, contact details, copy button, QR (`<div class="qr">` with an inline `<svg>`; it should encode `https://abdullah-bs.github.io/Masar/`)
+1. Hero: logo, `#langBtn`, «مسار», one-line lede, CTA to `#sim`, and the animated LED sign (`#heroArrow`, `#heroLabel`, `#heroFoot`)
+2. `#sim` (class `stage`): head with `#viewSeg`, `.map` (canvas `#site`, `#view3d`, `#legend2d`), `.console` (readout, official point, click mode + actions, link/evacuation + `#log`)
+3. `#prototype`: annotated SVG of the floor screen (sun hood, LED matrix, ESP32, battery in base, weighted base; x3-5) and six component cards with drawings and quantities (ESP32, battery, control panel, fire detector, route-close button, 3 assembly point signs). Real photos replace the drawings later.
+4. Footer `#contact`: logo, contact details, copy button. No QR code (removed on request).
 
-### QR code regeneration
-
-```python
-import qrcode, qrcode.image.svg
-img = qrcode.make("https://abdullah-bs.github.io/Masar/",
-                  image_factory=qrcode.image.svg.SvgPathImage, box_size=10, border=2)
-```
-
-Remove the `width`/`height` attributes from the generated `<svg>`, add `role="img" aria-label="QR code"`, and replace the `<svg>` inside `<div class="qr">`. Touch nothing else.
+Removed on purpose (kept in the pitch deck): story video, problem, solution, how it works, comparison, market, regulations, municipal, roadmap, FAQ, demo script, QR code. `masar_story.mp4` and `poster.jpg` are no longer used by the page.
 
 ## Simulator (`#sim`)
 
-- World units are pixels of a 3000 × 1800 plan. View: `VW=[0,150,3000,1750]`. Building: `BLD=[300,200,2700,1600]`.
-- Obstacle blocks (`BLOCKS`): machines row along the north wall `[380,262,2620,380]`; production line `[380,640,1500,1170]`; storage racks `[1800,640,2540,1170]`; machines `[380,1430,1500,1540]`; racks `[1800,1430,2540,1540]`. The press (fire source) is at `[610,262,800,390]` with fire point `PRESS=[700,470]`.
-- Aisles: north aisle (y ≈ 380–640), middle vertical aisle (x 1500–1800), south aisle (y 1170–1430), east aisle (x 2540–2700).
-- Doors: west wall at y 430–590 leads to assembly point A at `(140,510)`. East wall at y 1220–1380 leads to point B at `(2880,1300)`.
-- 8 screens `SCR`: `[520,510],[900,510],[1250,510],[1650,510],[1650,900],[1650,1300],[2150,1300],[2620,900]`.
-- 24 sensors `SENS`: x from 450 to 2550 in steps of 300, at y 470, 900 and 1330.
-- Routing: 50-unit grid (60 × 36) with BFS from the active point (`bfs`). A screen's arrow is the steepest-descent neighbour (`dirAt`). Routes are traced with `trace`.
-- Fire logic: a fire is "confirmed" 1.4 s after it starts and then blocks cells within 175 units. Sensors light up with a delay of distance/900 s (red under 380 units, amber under 650), with expanding rings. Screens within 260 units of a confirmed fire show X. A point is unsafe if a fire is within 520 units. If the official point is reached by fewer screens than the other point, the system auto-switches and explains why.
-- Controls: official point A/B (`#points`), click mode fire / close aisle (`#modes`), fire at the press (`#fireBtn`), close the middle aisle (`#closeMid`, closure at 1650,760), reset (`#clearBtn`), cut connection (`#linkBtn`, screens use the static default route and turn amber), start evacuation (`#evacBtn`, 12 workers in `WORK` walk the BFS path at 260 units/s), event log (`#log`).
-- Shared helpers used by both views: `compute(t)` returns state (active point, reason, dirs, routeD, alt), `walkerPos(t)`, and `clickAt(x,y)`.
+- Data-driven: `MAPS.site` (default) and `MAPS.factory`, switched by `#mapSeg`; view switched by `#viewSeg` (2D canvas `#site` / 3D `#view3d`). `setMap(id)` resets state and rebuilds both views.
+- Each map defines: `VW` view box, `BLD` boundary (site fence or factory walls), `gates` (walkable rects outside, leading to points), `walls` polylines, `blocks` (site kinds `bldg`, `crane`, `stock`, `pit`, `mix`, `cabin`; factory `m`, `l`, `r`), `hazard` (preset fire spot + button text), `closeAt` (preset closure), `lanes`, three points `pts` A/B/C with `side` labels, `official` default, screens `scr` as `[x, y, FACE, dx, dy]` (x, y = logical point in the middle of the walkway used for the arrow; dx, dy = where the sign is drawn, at the side of the walkway so it never blocks the path), sensor grid `sensX` x `sensY` (filtered to walkable), `work` (12 workers), 3D `cams` (overview only), 2D palette `pal`.
+- Site map: 3400 x 2100, fence 250-3150 x 250-1850, gates west (A), north (B), south (C); 8 floor screens; fire preset at the welding area; closure preset in the walkway between the building and the materials yard.
+- Factory map: 3000 x 1900 view, doors west (A), east (B) and south (C); 6 floor screens; fire preset at the press.
+- Route network: `routeEdges` traces every non-X screen to the active point (a tree); 2D draws it with dots flowing toward the exit, 3D with pulses. It changes with every fire, closure, point change or link loss.
+- Routing: 50-unit grid, BFS from each point (`bfs`), `OPEN` grid precomputed per map, arrows by steepest descent (`dirAt`), `trace` for routes and walkers.
+- Fire safety (hard rule: nobody is ever routed past a fire): the first detector reading closes a no-go zone of `FIRE_BLOCK` = 300 around the fire at once (the 1.4 s confirmation only pinpoints it visually); cells within `FIRE_SOFT` = 480 cost 60x, so routes use them only when there is no other way; screens within `SCREEN_X` = 330 show X; a point is unsafe if a fire is within `POINT_UNSAFE` = 560. Sensors light with delay distance/900 s (red < 380, amber < 650).
+- Walkers (`planWalkers`, `walkerPath`, `escapeTo`): always respect fire and barriers, even with the connection cut; re-plan live from where they stand whenever the situation changes; anyone inside the zone first walks out with every step farther from the fire; with no reachable point they still leave the zone and wait. Stress test (44 scenarios, both maps): zero approaches, closest 302 for anyone who started outside the zone. If the official point is unsafe or unreachable, the system switches to the safe point reachable by the most screens and says why.
+- Closures (`makeClosure`): a line of red/white water-filled barriers with cones at both ends, spanning the full width of the walkway, so routes and walkers cannot pass. Clicking it again removes it.
+- Controls: `#points` (`#ptA`, `#ptB`, `#ptC`), `#modes`, `#fireBtn`, `#closeMid`, `#clearBtn`, `#linkBtn` (default routes, amber), `#evacBtn` (12 workers at 260 units/s), `#log`.
 
 ## 3D view
 
-- Toggle `#viewSeg` (2D / 3D). The 3D container is `#view3d`. three.js r128 and OrbitControls are lazy-loaded from `cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js` and `cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js`.
-- Scale: 1 3D unit = 100 plan units (x → x, y → z). Shows the floor, aisle markings, machines, the production line with robot arms, racks, see-through walls, ceiling sensors, assembly points with labels, fire (flames, smoke, point light), sensor rings, the confirmed-zone circle, striped barriers for closures, a glowing route and walking workers.
-- Each screen has two faces. `FACE=['E','E','E','E','S','S','E','S']` is the walking direction of people who see the front face. The arrow is drawn relative to the walker (up = straight ahead, right = turn right) by `relArrow`.
-- Camera presets: `#cam3Over` overview, `#cam3Eye` worker's eye in the north aisle, `#cam3Turn` at the first turn. Clicking the floor calls `clickAt` (fire or close aisle).
-- Proof-of-version marker: the new page contains the text `عرض ثلاثي الأبعاد`.
+- three.js r128 + OrbitControls lazy-loaded from `cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js` and `cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js`. 1 3D unit = 100 plan units.
+- `buildWorld()` rebuilds the map scene. Site is outdoor (sky, sun, fence, building under construction with scaffolding, rotating tower crane, materials, fenced excavation, mixer, site cabins, gas cylinders at the welding spot); factory is indoor.
+- Floor screens: hazard-striped weighted base, two legs, two-faced panel with a sun hood; arrows drawn relative to the walker (`relArrow`, `ROTY` per FACE).
+- Only one camera button: `#cam3Over` (reset view). Worker's-eye and at-the-turn views were removed on request.
+- Local testing: the sandbox blocks the CDNs; get three@0.128.0 with `npm pack` and route the two URLs to the local files in Playwright (`--use-gl=swiftshader`).
 
 ## Content and numbers (keep sources; estimates labelled)
 
@@ -103,7 +88,7 @@ Remove the `width`/`height` attributes from the generated `<svg>`, add `role="im
 - Regulations: Labor Law (prevent fire, keep escape exits usable); OSH regulation for sites with 50+ workers; SBC 801 has a means-of-egress chapter (do not quote clause numbers); Ministry of Municipalities draft construction-site guide (April 2026) has no dynamic-guidance clause, which is the opportunity; precedent in worker-housing rules; HRSD precaution guide (November 2025).
 - Competitors: Eaton, Zumtobel SMARTSIGN, Advanced, Evaclite (fixed adaptive signage); Triax Spot-r EvacTag (on-site alert, not directional); WakeCap (Saudi, worker tracking; a likely partner).
 - Roadmap: pilot of 2–3 sites in Riyadh or Jeddah (0–6 months); developer and ministry adoption (6–18 months); then Riyadh → Jeddah/Makkah → Eastern Province → GCC.
-- Prototype demo kit: 3–5 wireless LED screens, 1 control panel, 2 assembly points (A, B), 1 fire sensor, 1 manual route-close button. Demo script: normal state → change the point to B → fire blocks route 1 → manual closure → connection drops and screens fall back safely.
+- Prototype demo kit: 3–5 wireless LED screens, 1 control panel, 3 assembly points (A, B, C), 1 fire sensor, 1 manual route-close button. Demo script: normal state → change the point to B → fire blocks route 1 → manual closure → connection drops and screens fall back safely.
 
 ## Related assets (outside the repo)
 
