@@ -3,7 +3,7 @@
 Read this file first in every session and follow its rules.
 
 Owner: Abdullah Binsalman (GitHub `Abdullah-BS`), ElectroFusion.
-Repo: `Abdullah-BS/Masar` → to be renamed `Abdullah-BS/masar`. Live site (GitHub Pages, `main` / root): `https://abdullah-bs.github.io/masar/` (old address `https://abdullah-bs.github.io/Masar/`).
+Repo: `Abdullah-BS/Masar` (not renamed; keep the capital M). Live site (GitHub Pages, `main` / root): `https://abdullah-bs.github.io/Masar/` (the lowercase `/masar/` returns 404).
 Site files: `index.html` (self-contained), `masar_story.mp4` (720p story video), `poster.jpg` (video poster).
 
 ## What Masar is
@@ -62,13 +62,13 @@ Sections in order (ids):
 12. `#prototype` — demo kit plus a photo placeholder saying «قريباً»
 13. `#plan` — roadmap
 14. `#faq` — rendered from the JS array `faqs`
-15. Footer `#contact` — logo, contact details, copy button, QR (`<div class="qr">` with an inline `<svg>`; it should encode `https://abdullah-bs.github.io/masar/`)
+15. Footer `#contact` — logo, contact details, copy button, QR (`<div class="qr">` with an inline `<svg>`; it should encode `https://abdullah-bs.github.io/Masar/`)
 
 ### QR code regeneration
 
 ```python
 import qrcode, qrcode.image.svg
-img = qrcode.make("https://abdullah-bs.github.io/masar/",
+img = qrcode.make("https://abdullah-bs.github.io/Masar/",
                   image_factory=qrcode.image.svg.SvgPathImage, box_size=10, border=2)
 ```
 
