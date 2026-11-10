@@ -48,16 +48,29 @@ Wrapper: `<div class="page" id="page" dir="rtl" lang="ar" data-lang="ar">`. Bili
 
 Purpose: a demonstration of the idea, not the pitch deck. Keep text minimal; detailed figures live in the slides.
 
-Design world: "the sign is the interface". Brand Paper page; wine-gradient hero and footer with rose stripes; the simulator runs full width on an always-dark "control room" stage with a 4-part console under the map. No sticky nav.
+Design world: "the sign is the interface". Brand Paper page; wine-gradient hero and footer with rose stripes; section 01 is a working control panel on an always-dark "control room" stage. No sticky nav.
 
 Sections in order (ids):
 
 1. Hero: logo, `#langBtn`, «مسار», one-line lede, CTA to `#sim`, and the animated LED sign (`#heroArrow`, `#heroLabel`, `#heroFoot`)
-2. `#sim` (class `stage`): head with `#viewSeg`, `.map` (canvas `#site`, `#view3d`, `#legend2d`), `.console` (readout, official point, click mode + actions, link/evacuation + `#log`)
+2. `#sim` (class `stage`): the control panel `#cp` (see "Control panel" below)
 3. `#prototype`: annotated SVG of the floor screen (sun hood, LED matrix, ESP32, battery in base, weighted base; x3-5) and six component cards with drawings and quantities (ESP32, battery, control panel, fire detector, route-close button, 3 assembly point signs). Real photos replace the drawings later.
 4. Footer `#contact`: logo, contact details, copy button. No QR code (removed on request).
 
 Removed on purpose (kept in the pitch deck): story video, problem, solution, how it works, comparison, market, regulations, municipal, roadmap, FAQ, demo script, QR code. `masar_story.mp4` and `poster.jpg` are no longer used by the page.
+
+## Control panel (`#cp`)
+
+The page presents Masar as an operator console that could run a real site, in demo mode (fires are simulated by clicking the plan). Layout: status bar, then map column + 344px rail.
+
+- Status bar `.cp-bar`: system state `#sysState` (`data-s` = `ok` / `fire` / `evac` / `link`, text `#sysText`, incident timer `#incTimer`), source tag `#srcTag` (demo mode / model connected over USB), `#clock`, `#tourBtn` (auto demo), `#sndBtn` (alarm sound, off by default), `#hwBtn` (hardware dialog), `#fsBtn` (fullscreen on `#cp`).
+- Map tools `.map-tools`: `#mapSeg`, `#viewSeg`, and the tool group `#modes` (`data-m` = `fire`, `close`, `edit`). The tool decides what a click on the plan does, in 2D and 3D.
+- Screens are numbered S1… in `scr` order. Fleet strip `#fleet` (one `.tile` per screen: arrow, status, demo battery). Clicking a tile or a screen on the plan selects it (`sel`) and opens the inspector `#insp` in the rail: what the worker sees (`#inspDir`, relative arrow), where it leads, `#inspBlink` (flash to find), `#inspOff` (out of service → direction `'O'`), `#inspDel` (move tool only).
+- Move tool (`edit`): drag a screen to move it, click a walkway to add one (max 14), delete from the inspector (min 2). `autoSide` puts the sign at the nearer edge and faces it toward people walking the current route. Layout is saved per map in `localStorage` `masar-layout-<map>`; `#layoutReset` restores the original. Last map is saved in `masar-map`.
+- Rail: readout (`#activeOut`, `#reasonOut`, `#syncOut` = screens online, `#sensOut`), `#points`, incident box (`#evacBtn`, `#fireBtn`, `#closeMid`, `#linkBtn`, `#clearBtn` = end incident), event log `#log` with `#logCsv` (CSV export of the full `events` history).
+- Auto demo (`tourStart`): normal → move the point → fire → evacuation → connection lost → restored, with captions in `#tourCap`.
+- Real hardware (`#hwDlg`, Web Serial, Chrome/Edge desktop): every 500 ms the panel sends one line at 115200 baud: `M,<seq>,<point>,<mode>,<arrows>` — point A/B/C or `-`, mode N/F/E, one letter per screen in order (U ahead, R right, L left, D back, X closed, O off; relative to the walker facing the front face). When the connection is "cut" the panel stops sending, so real screens time out (3 s) and fall back to their default arrow. The dialog shows the live frame and a reference ESP32 sketch. The sketch has NOT been run on real hardware; the serial path is tested only with a fake port.
+- Battery percentages are demo values and are labelled as such. Do not present them as real telemetry.
 
 ## Simulator (`#sim`)
 
@@ -66,11 +79,10 @@ Removed on purpose (kept in the pitch deck): story video, problem, solution, how
 - Site map: 3400 x 2100, fence 250-3150 x 250-1850, gates west (A), north (B), south (C); 8 floor screens; fire preset at the welding area; closure preset in the walkway between the building and the materials yard.
 - Factory map: 3000 x 1900 view, doors west (A), east (B) and south (C); 6 floor screens; fire preset at the press.
 - Route network: `routeEdges` traces every non-X screen to the active point (a tree); 2D draws it with dots flowing toward the exit, 3D with pulses. It changes with every fire, closure, point change or link loss.
-- Routing: 50-unit grid, BFS from each point (`bfs`), `OPEN` grid precomputed per map, arrows by steepest descent (`dirAt`), `trace` for routes and walkers.
+- Routing: 50-unit grid, BFS from each point (`bfs`), `OPEN` grid precomputed per map, arrows by steepest descent (`dirAt` / `step`; ties go straight on, then along the direction the route continues longest), `trace` for routes and walkers.
 - Fire safety (hard rule: nobody is ever routed past a fire): the first detector reading closes a no-go zone of `FIRE_BLOCK` = 300 around the fire at once (the 1.4 s confirmation only pinpoints it visually); cells within `FIRE_SOFT` = 480 cost 60x, so routes use them only when there is no other way; screens within `SCREEN_X` = 330 show X; a point is unsafe if a fire is within `POINT_UNSAFE` = 560. Sensors light with delay distance/900 s (red < 380, amber < 650).
-- Walkers (`planWalkers`, `walkerPath`, `escapeTo`): always respect fire and barriers, even with the connection cut; re-plan live from where they stand whenever the situation changes; anyone inside the zone first walks out with every step farther from the fire; with no reachable point they still leave the zone and wait. Stress test (44 scenarios, both maps): zero approaches, closest 302 for anyone who started outside the zone. If the official point is unsafe or unreachable, the system switches to the safe point reachable by the most screens and says why.
+- Walkers (`planWalkers`, `walkerPath`, `escapeTo`): always respect fire and barriers, even with the connection cut; re-plan live from where they stand whenever the situation changes; anyone inside the zone first walks out, and no step may bring them closer to a fire at any moment (`segFire` checks the whole step, so they never walk past a fire's nearest point); with no reachable point they still leave the zone and wait. Stress test (`safety.js`, seeded, 44 scenarios per run on both maps): zero approaches over 132 scenarios, closest 300 for anyone who started outside the zone. If the official point is unsafe or unreachable, the system switches to the safe point reachable by the most screens and says why.
 - Closures (`makeClosure`): a line of red/white water-filled barriers with cones at both ends, spanning the full width of the walkway, so routes and walkers cannot pass. Clicking it again removes it.
-- Controls: `#points` (`#ptA`, `#ptB`, `#ptC`), `#modes`, `#fireBtn`, `#closeMid`, `#clearBtn`, `#linkBtn` (default routes, amber), `#evacBtn` (12 workers at 260 units/s), `#log`.
 
 ## 3D view
 

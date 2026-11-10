@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}</style>
 <title>مسار</title>
+<meta name="description" content="مسار: نظام توجيه إخلاء ذكي بشاشات أرضية لاسلكية، مع لوحة تحكم حية تعمل من المتصفح.">
+<meta name="theme-color" content="#59022A">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2312060C'/%3E%3Cpath fill='%233BE37A' d='M10 26h24V14l22 18-22 18V38H10z'/%3E%3C/svg%3E">
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -82,52 +85,127 @@ a{color:inherit}
 h2{font-size:clamp(32px,4.4vw,56px);font-weight:600;margin-top:12px}
 .sub{color:var(--muted);font-size:18px;margin-top:10px;max-width:60ch}
 
-/* ---------- simulator stage (always dark: a control room) ---------- */
+/* ---------- control panel (always dark: a control room) ---------- */
 .stage{--surface:#1D0C15;--ink:#F3ECEF;--muted:#B9A6AE;--line:#3A2230;--wine:#F0587D;
   background:radial-gradient(120% 80% at 50% 0%,#2A0D1C 0%,#12060C 60%);color:var(--ink);padding-block:84px 72px;color-scheme:dark}
 .stage .idx{color:#F0587D}
-.stage-head{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap;margin-bottom:26px}
-.stage-head>div:first-child{min-width:0;flex:1 1 420px}
-.map{position:relative;background:#0E1116;border-radius:20px;padding:10px;box-shadow:0 0 0 1px #2C1A24,0 40px 90px rgba(0,0,0,.45)}
+.stage-head{margin-bottom:24px}
+.cp{display:grid;gap:12px}
+.cp:fullscreen{background:#12060C;padding:14px;overflow:auto;align-content:start}
+/* status bar */
+.cp-bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;background:#0B0508;border:1px solid #2C1A24;border-radius:16px;padding:10px 12px}
+.sys{display:inline-flex;align-items:center;gap:10px;border-radius:11px;padding:9px 16px;font-family:var(--ff-display);font-weight:600;font-size:17px;background:rgba(59,227,122,.12);color:#7BF0A8;transition:background .3s,color .3s}
+.sys i{width:11px;height:11px;border-radius:50%;background:currentColor;box-shadow:0 0 12px currentColor;flex:none}
+.sys span{font-size:15px;font-weight:500;opacity:.9;padding-inline-start:10px;border-inline-start:1px solid currentColor}
+.sys[data-s="fire"]{background:#FF3B4E;color:#fff}
+.sys[data-s="fire"] i,.sys[data-s="evac"] i{animation:pulse 1s ease-in-out infinite}
+.sys[data-s="evac"]{background:#FF6A1A;color:#1A0A00}
+.sys[data-s="link"]{background:var(--amber);color:#2A1A00}
+.tag{font-size:13px;font-weight:600;color:var(--muted);border:1px dashed #5A3A4A;border-radius:99px;padding:4px 12px;white-space:nowrap}
+.tag.on{color:#06210F;background:var(--led);border:1px solid var(--led)}
+.bar-end{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-inline-start:auto}
+.clock{font-size:15px;color:var(--muted);padding-inline:6px;direction:ltr}
+.ibtn{display:inline-flex;align-items:center;gap:8px;font:500 14px/1 var(--ff-body);color:var(--ink);background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:10px;padding:9px 12px;cursor:pointer;transition:background .2s,border-color .2s}
+.ibtn:hover{border-color:#6B4A5A;background:rgba(255,255,255,.09)}
+.ibtn svg{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.ibtn[aria-pressed="true"]{background:#A62746;border-color:#A62746;color:#fff}
+.ibtn.on{border-color:var(--led);color:var(--led)}
+/* main grid */
+.cp-main{display:grid;grid-template-columns:minmax(0,1fr) 344px;gap:12px;align-items:start}
+.cp-map{display:grid;gap:10px;min-width:0}
+.map-tools{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center}
+.map-tools .sp{flex:1 1 0}
+.map{position:relative;background:#0E1116;border-radius:18px;padding:8px;box-shadow:0 0 0 1px #2C1A24,0 30px 70px rgba(0,0,0,.4)}
 #site{width:100%;height:auto;display:block;border-radius:12px;touch-action:manipulation;cursor:crosshair;background:#0E1116}
-.legend{display:flex;flex-wrap:wrap;gap:8px 20px;padding:12px 8px 4px;font-size:14px;color:var(--muted)}
+#site.edit{cursor:grab;touch-action:none}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;padding:2px 6px;font-size:13.5px;color:var(--muted)}
 .legend span{display:inline-flex;align-items:center;gap:7px}
-.sw{width:16px;height:16px;border-radius:4px;display:inline-block}
-.console{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1.2fr) minmax(0,1.3fr);gap:14px;margin-top:14px;align-items:stretch}
-.box{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;min-width:0}
-.box h3{font-size:15px;font-weight:600;margin-bottom:10px;color:var(--ink)}
-.hint{font-size:14px;color:var(--muted);margin-top:8px}
+.sw{width:15px;height:15px;border-radius:4px;display:inline-block}
+.edit-bar{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;justify-content:space-between;background:rgba(255,176,32,.12);border:1px solid rgba(255,176,32,.45);color:#FFD27A;border-radius:12px;padding:8px 12px;font-size:14px}
+.tour-cap{position:absolute;inset-inline:16px;bottom:16px;z-index:3;background:rgba(11,5,8,.92);border:1px solid var(--led);color:#E8FFF0;border-radius:14px;padding:12px 16px;font-family:var(--ff-display);font-size:clamp(15px,1.5vw,19px);text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+/* screen inspector */
+.insp{background:var(--surface);border:1px solid var(--rose);border-radius:16px;padding:12px;display:grid;gap:10px;min-width:0;animation:pop .25s var(--ease)}
+@keyframes pop{from{opacity:0;transform:translateY(-6px)}}
+.insp-h{display:flex;align-items:center;gap:8px}
+.insp-h b{font:700 20px/1 var(--ff-display)}
+.insp-h .st{font-size:12.5px;font-weight:600;border-radius:99px;padding:3px 9px;background:rgba(59,227,122,.14);color:#7BF0A8}
+.insp-h .st[data-s="off"]{background:rgba(255,255,255,.08);color:var(--muted)}
+.insp-h .st[data-s="link"]{background:rgba(255,176,32,.16);color:#FFD27A}
+.insp-h button{margin-inline-start:auto;background:none;border:none;color:var(--muted);font-size:22px;line-height:1;cursor:pointer;padding:2px 6px}
+.insp-face{border-radius:10px;padding:14px 10px;display:grid;place-items:center;background-image:radial-gradient(circle,#24141B 1.5px,transparent 1.8px);background-size:9px 9px;background-color:#0B0508;min-height:92px}
+.insp-face svg{width:120px;height:68px;transition:transform .35s cubic-bezier(.6,0,.2,1)}
+.insp dl{margin:0;display:grid;gap:5px;font-size:13.5px}
+.insp dl div{display:flex;justify-content:space-between;gap:10px}
+.insp dt{color:var(--muted)}.insp dd{margin:0;font-weight:600;text-align:end}
+.insp .acts .act{font-size:13px;padding:8px 6px}
+/* fleet strip */
+.fleet-h{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:600}
+.fleet{display:grid;grid-template-columns:repeat(auto-fill,minmax(126px,1fr));gap:8px}
+.tile{display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto;align-items:center;gap:2px 8px;text-align:start;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:9px 10px;color:var(--ink);cursor:pointer;font:500 13px/1.2 var(--ff-body);transition:border-color .2s,transform .2s var(--ease)}
+.tile:hover{border-color:#6B4A5A;transform:translateY(-1px)}
+.tile[aria-pressed="true"]{border-color:var(--rose);box-shadow:inset 0 0 0 1px var(--rose)}
+.tile svg{grid-row:1/3;width:30px;height:30px;padding:5px;border-radius:8px;background:#0B0508;fill:var(--led)}
+.tile b{font:700 14px/1 var(--ff-display)}
+.tile small{color:var(--muted);font-size:12px;white-space:nowrap}
+.tile[data-s="x"] svg{fill:#FF3B4E}.tile[data-s="amber"] svg{fill:var(--amber)}.tile[data-s="off"]{opacity:.55}.tile[data-s="off"] svg{fill:#5A5F66}
+/* rail */
+.cp-rail{display:grid;gap:10px;min-width:0}
+.box{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;min-width:0}
+.box h3{font-size:14.5px;font-weight:600;margin-bottom:10px;color:var(--ink);display:flex;justify-content:space-between;align-items:center;gap:8px}
+.hint{font-size:13.5px;color:var(--muted);margin-top:8px}
 .seg{display:grid;grid-template-columns:1fr 1fr;gap:6px}
 .seg button,.act{font:500 14px/1.35 var(--ff-body);color:var(--ink);background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:10px;padding:10px 8px;cursor:pointer;text-align:center;transition:background .2s,border-color .2s}
 .seg button:hover,.act:hover{border-color:#6B4A5A}
 .seg button[aria-pressed="true"]{background:#A62746;color:#fff;border-color:#A62746}
-.switches{display:flex;flex-wrap:wrap;gap:12px 32px;align-items:center;margin-bottom:16px}
-.pick{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-.pick-lbl{font-size:14px;font-weight:600;color:var(--muted)}
-.seg.big{display:inline-grid;grid-auto-flow:column;grid-template-columns:none;gap:4px;background:rgba(255,255,255,.05);padding:5px;border-radius:14px;border:1px solid var(--line)}
-.seg.big button{display:inline-flex;align-items:center;gap:9px;padding:11px 18px;font-size:15px;font-weight:600;border:none;border-radius:10px;background:transparent}
+.seg.big{display:inline-grid;grid-auto-flow:column;grid-template-columns:none;gap:3px;background:rgba(255,255,255,.05);padding:4px;border-radius:12px;border:1px solid var(--line)}
+.seg.big button{display:inline-flex;align-items:center;gap:7px;padding:8px 12px;font-size:14px;font-weight:600;border:none;border-radius:9px;background:transparent;white-space:nowrap}
 .seg.big button[aria-pressed="true"]{background:#A62746;color:#fff}
-.seg.big svg{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.seg.big button[data-m="edit"][aria-pressed="true"]{background:var(--amber);color:#2A1A00}
+.seg.big svg{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .seg3{grid-template-columns:repeat(3,1fr)}
 .acts{display:flex;flex-wrap:wrap;gap:8px}
 .act{flex:1 1 auto}
-.act.primary{background:var(--led);color:#06210F;border-color:var(--led);font-weight:700}
+.act.primary{background:var(--led);color:#06210F;border-color:var(--led);font-weight:700;flex-basis:100%;padding-block:13px;font-size:16px}
 .act.primary:hover{background:#5FF095;border-color:#5FF095}
 .act[aria-pressed="true"]{background:var(--amber);color:#2A1A00;border-color:var(--amber)}
-.act:disabled{opacity:.5;cursor:not-allowed}
-.readout{background:#0B0508;border:1px solid #2C1A24;border-radius:16px;padding:16px 18px;color:#B9A6AE;display:grid;gap:4px;align-content:start;min-width:0}
-.readout b{font-family:var(--ff-display);font-size:44px;line-height:1.1;color:var(--led);font-weight:600;text-shadow:0 0 14px rgba(59,227,122,.5)}
+.act.quiet{background:transparent;color:var(--muted)}
+.act.danger:hover{border-color:#FF3B4E;color:#FF8A96}
+.readout{background:#0B0508;border:1px solid #2C1A24;border-radius:16px;padding:14px 16px;color:#B9A6AE;display:grid;gap:2px;align-content:start;min-width:0;font-size:14.5px}
+.readout b{font-family:var(--ff-display);font-size:52px;line-height:1.05;color:var(--led);font-weight:600;text-shadow:0 0 14px rgba(59,227,122,.5)}
 .readout .warn{color:#FFB37A}
-.stats{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:14px;margin-top:6px}
+.stats{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:13.5px;margin-top:6px}
 .stats strong{color:#F3ECEF}
-.log{list-style:none;margin:0;padding:0;display:grid;gap:8px;font-size:14px;max-height:132px;overflow:auto;scrollbar-width:thin}
+.log{list-style:none;margin:0;padding:0;display:grid;gap:7px;font-size:13.5px;max-height:190px;overflow:auto;scrollbar-width:thin;align-content:start}
 .log li{display:grid;grid-template-columns:auto 1fr;gap:10px;color:var(--muted)}
+.log li:first-child{color:var(--ink)}
 .log time{font-variant-numeric:tabular-nums;color:var(--wine);font-weight:600;direction:ltr}
-.cam3{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.mini{font:600 12.5px/1 var(--ff-body);color:var(--muted);background:none;border:1px solid var(--line);border-radius:8px;padding:6px 9px;cursor:pointer}
+.mini:hover{color:var(--ink);border-color:#6B4A5A}
+.cam3{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
 .cam3 .act{flex:0 0 auto;padding-inline:18px}
 .msg3{padding:40px 10px;text-align:center;color:var(--muted)}
 #view3d canvas{cursor:grab;border-radius:12px}
 #view3d .hint{padding-inline:6px}
+/* hardware dialog */
+dialog.hw{--surface:#1D0C15;--ink:#F3ECEF;--muted:#B9A6AE;--line:#3A2230;--wine:#F0587D;width:min(680px,calc(100vw - 24px));max-height:calc(100dvh - 24px);background:#16080F;color:#F3ECEF;border:1px solid #4A2C3A;border-radius:20px;padding:0;color-scheme:dark;font-family:var(--ff-body)}
+dialog.hw::backdrop{background:rgba(8,2,5,.7);backdrop-filter:blur(3px)}
+.hw-in{padding:22px;display:grid;gap:14px}
+.hw-in h3{font-size:22px;font-weight:600;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.hw-in h3 button{background:none;border:none;color:#B9A6AE;font-size:26px;line-height:1;cursor:pointer}
+.hw-in p,.hw-in li{color:#C9B8BF;font-size:15px}
+.hw-in ol{margin:0;padding-inline-start:20px;display:grid;gap:4px}
+.hw-row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.hw-row .act{flex:0 0 auto;padding-inline:18px}
+.hw-row .act.primary{flex-basis:auto;padding-block:11px;font-size:15px}
+.hw-st{font-size:14px;color:#B9A6AE}
+.hw-st.ok{color:var(--led)}.hw-st.err{color:#FF8A96}
+.hw-in pre{margin:0;direction:ltr;text-align:left;background:#0B0508;border:1px solid #2C1A24;border-radius:12px;padding:12px 14px;font:13px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#CFEFDB;overflow:auto;white-space:pre}
+.hw-in pre.frame{font-size:16px;color:var(--led);white-space:pre-wrap;word-break:break-all}
+.hw-in summary{cursor:pointer;font-weight:600;font-size:15px}
+.hw-in details pre{margin-top:10px;max-height:260px}
+.hw-in table{border-collapse:collapse;font-size:14px;width:100%}
+.hw-in td{padding:4px 8px;border-bottom:1px solid #2C1A24;color:#C9B8BF}
+.hw-in td:first-child{font-family:ui-monospace,Menlo,Consolas,monospace;color:var(--led);white-space:nowrap;direction:ltr;text-align:start}
 
 /* ---------- prototype ---------- */
 section.block{padding-block:96px}
@@ -180,7 +258,9 @@ footer::before{content:"";position:absolute;width:900px;height:70px;background:#
 
 /* ---------- responsive ---------- */
 @media (max-width:1100px){
-  .console{grid-template-columns:1fr 1fr}
+  .cp-main{grid-template-columns:1fr}
+  .cp-rail{grid-template-columns:1fr 1fr}
+  .cp-rail .readout,.cp-rail .insp{grid-column:1/-1}
 }
 @media (max-width:920px){
   .hero-grid,.proto,.foot{grid-template-columns:1fr}
@@ -189,7 +269,13 @@ footer::before{content:"";position:absolute;width:900px;height:70px;background:#
   .foot{gap:28px}
 }
 @media (max-width:620px){
-  .console{grid-template-columns:1fr}
+  .cp-rail{grid-template-columns:1fr}
+  .bar-end{margin-inline-start:0}
+  #sndBtn span,.clock{display:none}
+  .seg.big button{padding:8px 9px;font-size:13px;gap:5px}
+  .seg.big svg{width:16px;height:16px}
+  .map-tools .sp{display:none}
+  .sys{font-size:15px;padding:8px 12px}
   section.block{padding-block:64px}
   .stage{padding-block:56px}
   .topbar img{height:30px}
@@ -216,7 +302,7 @@ footer::before{content:"";position:absolute;width:900px;height:70px;background:#
       <p class="kicker"><span class="ar">نظام توجيه الإخلاء الذكي</span><span class="en">Smart evacuation guidance</span></p>
       <h1><span class="ar">مسار</span><span class="en">Masar</span></h1>
       <p class="lede"><span class="ar">توجيه إخلاء يتغير مع تغيّر المكان والخطر</span><span class="en">Evacuation guidance that changes with the site and the hazard</span></p>
-      <a class="cta" href="#sim"><span class="ar">جرّب المحاكاة</span><span class="en">Try the simulator</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v15M6 13l6 6 6-6"/></svg></a>
+      <a class="cta" href="#sim"><span class="ar">افتح لوحة التحكم</span><span class="en">Open the control panel</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v15M6 13l6 6 6-6"/></svg></a>
     </div>
     <div class="sign" aria-hidden="true">
         <div class="sign-top"><span class="ar">شاشة توجيه · الممر الشمالي</span><span class="en">Guide screen · North aisle</span><span class="live"><span class="ar">مباشر</span><span class="en">Live</span></span></div>
@@ -233,75 +319,170 @@ footer::before{content:"";position:absolute;width:900px;height:70px;background:#
 <section class="stage" id="sim">
   <div class="wrap wide">
     <div class="stage-head">
-      <div>
-        <p class="idx"><span class="num">01</span><span class="ar">المحاكاة</span><span class="en">Simulator</span></p>
-        <h2><span class="ar">جرّب مسار على موقع تجريبي</span><span class="en">Try Masar on a sample site</span></h2>
-        <p class="sub"><span class="ar">اضغط على المخطط لإشعال حريق، وشوف الشاشات كيف تغيّر المسار.</span><span class="en">Click the plan to start a fire and watch the screens reroute.</span></p>
+      <p class="idx"><span class="num">01</span><span class="ar">لوحة التحكم</span><span class="en">Control panel</span></p>
+      <h2><span class="ar">لوحة تحكم مسار</span><span class="en">Masar control panel</span></h2>
+      <p class="sub"><span class="ar">لوحة تشغيل حقيقية بوضع تجريبي: اضغط على المخطط لمحاكاة كاشف حريق، حرّك الشاشات مثل ما تتحرك في موقعك، أو اربط شاشات النموذج عبر USB.</span><span class="en">A real operator panel running in demo mode: click the plan to simulate a fire detector, move the screens the way they move on your site, or connect the model's screens over USB.</span></p>
+    </div>
+    <div class="cp" id="cp">
+      <div class="cp-bar">
+        <div class="sys" id="sysState" data-s="ok" role="status" aria-live="polite"><i></i><b id="sysText"></b><span class="num" id="incTimer" hidden></span></div>
+        <span class="tag" id="srcTag"></span>
+        <div class="bar-end">
+          <span class="clock num" id="clock"></span>
+          <button type="button" class="ibtn" id="tourBtn" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l12-7.5z"/></svg><span class="ar">عرض تلقائي</span><span class="en">Auto demo</span></button>
+          <button type="button" class="ibtn" id="sndBtn" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5v5h3.5L12 19V5L7.5 9.5zM16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"/></svg><span class="ar">صوت الإنذار</span><span class="en">Alarm sound</span></button>
+          <button type="button" class="ibtn" id="hwBtn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21V8M12 8l-3 3M12 8l3 3M12 3v2M8 15h8M8 15v-3M16 15v-2"/><circle cx="12" cy="4" r="1.3"/></svg><span class="ar">ربط النموذج</span><span class="en">Connect model</span></button>
+          <button type="button" class="ibtn" id="fsBtn" aria-label="Fullscreen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+        </div>
       </div>
-    </div>
-    <div class="switches">
-      <div class="pick"><span class="pick-lbl"><span class="ar">الخريطة</span><span class="en">Map</span></span>
-        <div class="seg big" id="mapSeg"><button type="button" data-map="site" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V4M9 21V4M5 8h4M5 13h4M5 18h4M5 4h16M9 4l3-2M19 4v6M17 10h4v3h-4z"/></svg><span class="ar">موقع إنشاء</span><span class="en">Construction site</span></button><button type="button" data-map="factory" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21V11l5 3v-3l5 3v-3l5 3V4h3v17zM7 18h2M12 18h2"/></svg><span class="ar">مصنع</span><span class="en">Factory</span></button></div></div>
-      <div class="pick"><span class="pick-lbl"><span class="ar">العرض</span><span class="en">View</span></span>
-        <div class="seg big" id="viewSeg"><button type="button" data-v="2d" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 10h8v11M11 10V3M15 14h6"/></svg><span class="ar">مخطط ثنائي الأبعاد</span><span class="en">2D plan</span></button><button type="button" data-v="3d" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l8.5 4.8v9.4L12 21.5l-8.5-4.8V7.3zM12 12l8.5-4.7M12 12v9.5M12 12L3.5 7.3"/></svg><span class="ar">عرض ثلاثي الأبعاد</span><span class="en">3D view</span></button></div></div>
-    </div>
-    <div class="map">
-        <canvas id="site" width="1500" height="800" role="img" aria-label="Sample site plan with walkways, floor-standing guide screens, fire sensors and three assembly points"></canvas>
-        <div id="view3d" hidden>
-          <p id="msg3" class="msg3" hidden></p>
-          <div class="cam3">
-            <button type="button" class="act" id="cam3Over"><span class="ar">إعادة المنظور</span><span class="en">Reset view</span></button>
+      <div class="cp-main">
+        <div class="cp-map">
+          <div class="map-tools">
+            <div class="seg big" id="mapSeg"><button type="button" data-map="site" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V4M9 21V4M5 8h4M5 13h4M5 18h4M5 4h16M9 4l3-2M19 4v6M17 10h4v3h-4z"/></svg><span class="ar">موقع إنشاء</span><span class="en">Construction site</span></button><button type="button" data-map="factory" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21V11l5 3v-3l5 3v-3l5 3V4h3v17zM7 18h2M12 18h2"/></svg><span class="ar">مصنع</span><span class="en">Factory</span></button></div>
+            <div class="seg big" id="viewSeg"><button type="button" data-v="2d" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 10h8v11M11 10V3M15 14h6"/></svg><span class="ar">مخطط ثنائي الأبعاد</span><span class="en">2D plan</span></button><button type="button" data-v="3d" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l8.5 4.8v9.4L12 21.5l-8.5-4.8V7.3zM12 12l8.5-4.7M12 12v9.5M12 12L3.5 7.3"/></svg><span class="ar">عرض ثلاثي الأبعاد</span><span class="en">3D view</span></button></div>
+            <span class="sp"></span>
+            <div class="seg big" id="modes" role="group" aria-label="Map tool"><button type="button" id="mFire" data-m="fire" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c1 3.5 5 5.5 5 10a5 5 0 0 1-10 0c0-2.2 1-3.6 2-4.6.3 1.6 1.2 2.6 2 2.6 0-2.8-1-5.5 1-8z"/></svg><span class="ar">محاكاة حريق</span><span class="en">Simulate fire</span></button><button type="button" id="mClose" data-m="close" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9h18v6H3zM7 9l-3 6M12 9l-3 6M17 9l-3 6M21 10.5L18.5 15M6 15v4M18 15v4"/></svg><span class="ar">إغلاق ممر</span><span class="en">Close walkway</span></button><button type="button" id="mEdit" data-m="edit" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3"/></svg><span class="ar">نقل الشاشات</span><span class="en">Move screens</span></button></div>
           </div>
-          <p class="hint ar">اسحب للتدوير، وكبّر بعجلة الفأرة أو بإصبعين، واضغط على الأرض لإشعال حريق أو إغلاق ممر بحواجز.</p>
-          <p class="hint en">Drag to orbit, scroll or pinch to zoom, and tap the ground to start a fire or close a walkway with barriers.</p>
-        </div>
-        <div class="legend" id="legend2d">
-          <span><i class="sw" style="background:#07090B;box-shadow:inset 0 0 0 3px #39E27A"></i><span class="ar">شاشة أرضية</span><span class="en">Floor screen</span></span>
-          <span><i class="sw" style="background:#45C979;border-radius:50%"></i><span class="ar">حساس</span><span class="en">Sensor</span></span>
-          <span><i class="sw" style="background:#FF6A1A"></i><span class="ar">حريق</span><span class="en">Fire</span></span>
-          <span><i class="sw" style="background:repeating-linear-gradient(90deg,#E23B4E 0 6px,#F2F2F2 6px 12px)"></i><span class="ar">حواجز إغلاق</span><span class="en">Closure barriers</span></span>
-          <span><i class="sw" style="background:rgba(57,226,122,.25);box-shadow:inset 0 0 0 2px #39E27A;border-radius:50%"></i><span class="ar">نقطة تجمع</span><span class="en">Assembly point</span></span>
-        </div>
-    </div>
-    <div class="console">
-        <div class="readout" aria-live="polite">
-          <span class="ar">نقطة التجمع النشطة</span><span class="en">Active assembly point</span>
-          <b id="activeOut">ب</b>
-          <span id="reasonOut"></span>
-          <div class="stats"><span><span class="ar">الشاشات:</span><span class="en">Screens:</span> <strong id="syncOut" class="num">8/8</strong></span><span><span class="ar">حساسات ترصد:</span><span class="en">Sensors alerting:</span> <strong id="sensOut" class="num">0</strong></span></div>
-        </div>
-        <div class="box">
-          <h3 class="ar">نقطة التجمع المعتمدة</h3><h3 class="en">Official assembly point</h3>
-          <div class="seg seg3" id="points">
-            <button type="button" id="ptA" data-p="A" aria-pressed="true"></button>
-            <button type="button" id="ptB" data-p="B" aria-pressed="false"></button>
-            <button type="button" id="ptC" data-p="C" aria-pressed="false"></button>
+          <div class="edit-bar" id="editBar" hidden><span><span class="ar">اسحب أي شاشة لنقلها، أو اضغط على ممر لإضافة شاشة. التوجيه يتحدّث فوراً والترتيب ينحفظ.</span><span class="en">Drag a screen to move it, or click a walkway to add one. Guidance updates at once and the layout is saved.</span></span><button type="button" class="mini" id="layoutReset"><span class="ar">استرجاع الترتيب الأصلي</span><span class="en">Restore original layout</span></button></div>
+          <div class="map">
+            <canvas id="site" width="1500" height="800" role="img" aria-label="Site plan with walkways, floor-standing guide screens, fire sensors and three assembly points"></canvas>
+            <div id="view3d" hidden>
+              <p id="msg3" class="msg3" hidden></p>
+              <div class="cam3">
+                <button type="button" class="act" id="cam3Over"><span class="ar">إعادة المنظور</span><span class="en">Reset view</span></button>
+              </div>
+              <p class="hint ar">اسحب للتدوير، وكبّر بعجلة الفأرة أو بإصبعين، واضغط على الأرض لتنفيذ الأداة المختارة.</p>
+              <p class="hint en">Drag to orbit, scroll or pinch to zoom, and tap the ground to use the selected tool.</p>
+            </div>
+            <div class="tour-cap" id="tourCap" hidden></div>
           </div>
-          <p class="hint ar">مدير السلامة يغيّرها مع تغيّر الموقع.</p><p class="hint en">The safety manager changes it as the site changes.</p>
-        </div>
-        <div class="box">
-          <h3 class="ar">عند الضغط على المخطط</h3><h3 class="en">Clicking the plan will</h3>
-          <div class="seg" id="modes">
-            <button type="button" id="mFire" data-m="fire" aria-pressed="true"><span class="ar">إشعال حريق</span><span class="en">Start a fire</span></button>
-            <button type="button" id="mClose" data-m="close" aria-pressed="false"><span class="ar">إغلاق ممر</span><span class="en">Close an aisle</span></button>
+          <div class="legend" id="legend2d">
+            <span><i class="sw" style="background:#07090B;box-shadow:inset 0 0 0 3px #39E27A"></i><span class="ar">شاشة أرضية</span><span class="en">Floor screen</span></span>
+            <span><i class="sw" style="background:#45C979;border-radius:50%"></i><span class="ar">حساس</span><span class="en">Sensor</span></span>
+            <span><i class="sw" style="background:rgba(255,59,78,.3);box-shadow:inset 0 0 0 2px #FF3B4E;border-radius:50%"></i><span class="ar">منطقة حريق مغلقة</span><span class="en">Closed fire zone</span></span>
+            <span><i class="sw" style="background:repeating-linear-gradient(90deg,#E23B4E 0 6px,#F2F2F2 6px 12px)"></i><span class="ar">حواجز إغلاق</span><span class="en">Closure barriers</span></span>
+            <span><i class="sw" style="background:rgba(57,226,122,.25);box-shadow:inset 0 0 0 2px #39E27A;border-radius:50%"></i><span class="ar">نقطة تجمع</span><span class="en">Assembly point</span></span>
           </div>
-          <div class="acts" style="margin-top:8px">
-            <button type="button" class="act" id="fireBtn"><span class="ar">حريق عند المكبس</span><span class="en">Fire at the press</span></button>
-            <button type="button" class="act" id="closeMid"><span class="ar">أغلق الممر الأوسط</span><span class="en">Close middle aisle</span></button>
-            <button type="button" class="act" id="clearBtn"><span class="ar">إعادة ضبط</span><span class="en">Reset</span></button>
-          </div>
+          <div class="fleet-h"><span><span class="ar">الشاشات</span><span class="en">Screens</span> <span class="num" id="fleetN"></span></span><span class="tag"><span class="ar">بطاريات تجريبية</span><span class="en">demo batteries</span></span></div>
+          <div class="fleet" id="fleet"></div>
         </div>
-        <div class="box">
-          <div class="acts">
-            <button type="button" class="act" id="linkBtn" aria-pressed="false"><span class="ar">قطع الاتصال</span><span class="en">Cut connection</span></button>
-            <button type="button" class="act primary" id="evacBtn"><span class="ar">ابدأ الإخلاء</span><span class="en">Start evacuation</span></button>
+        <aside class="cp-rail">
+          <div class="readout" aria-live="polite">
+            <span class="ar">نقطة التجمع النشطة</span><span class="en">Active assembly point</span>
+            <b id="activeOut"></b>
+            <span id="reasonOut"></span>
+            <div class="stats"><span><span class="ar">شاشات تعمل:</span><span class="en">Screens online:</span> <strong id="syncOut" class="num"></strong></span><span><span class="ar">حساسات ترصد:</span><span class="en">Sensors alerting:</span> <strong id="sensOut" class="num">0</strong></span></div>
           </div>
-          <h3 style="margin-top:14px" class="ar">سجل الأحداث</h3><h3 style="margin-top:14px" class="en">Event log</h3>
-          <ul class="log" id="log"></ul>
-        </div>
+          <div class="insp" id="insp" hidden>
+            <div class="insp-h"><b id="inspId" class="num"></b><span class="st" id="inspSt"></span><button type="button" id="inspX" aria-label="Close">×</button></div>
+            <div class="insp-face" aria-hidden="true"><svg id="inspArrow" viewBox="-60 -34 120 68"><path id="inspA" fill="#3BE37A" d="M-52,-12 L8,-12 L8,-30 L54,0 L8,30 L8,12 L-52,12 Z"/><path id="inspXm" fill="none" stroke="#FF3B4E" stroke-width="13" stroke-linecap="round" d="M-24,-24 L24,24 M24,-24 L-24,24" hidden/></svg></div>
+            <dl>
+              <div><dt><span class="ar">ما يراه العامل</span><span class="en">Worker sees</span></dt><dd id="inspDir"></dd></div>
+              <div><dt><span class="ar">يقود إلى</span><span class="en">Leads to</span></dt><dd id="inspTo"></dd></div>
+              <div><dt><span class="ar">البطارية (تجريبي)</span><span class="en">Battery (demo)</span></dt><dd id="inspBat" class="num"></dd></div>
+            </dl>
+            <div class="acts">
+              <button type="button" class="act" id="inspBlink"><span class="ar">وميض للتعرّف</span><span class="en">Flash to find</span></button>
+              <button type="button" class="act" id="inspOff"></button>
+              <button type="button" class="act danger" id="inspDel" hidden><span class="ar">حذف الشاشة</span><span class="en">Remove screen</span></button>
+            </div>
+          </div>
+          <div class="box">
+            <h3><span><span class="ar">نقطة التجمع المعتمدة</span><span class="en">Official assembly point</span></span></h3>
+            <div class="seg seg3" id="points">
+              <button type="button" id="ptA" data-p="A" aria-pressed="true"></button>
+              <button type="button" id="ptB" data-p="B" aria-pressed="false"></button>
+              <button type="button" id="ptC" data-p="C" aria-pressed="false"></button>
+            </div>
+            <p class="hint ar">مدير السلامة يغيّرها مع تغيّر الموقع، وكل الشاشات تتبدل.</p><p class="hint en">The safety manager changes it as the site changes, and every screen follows.</p>
+          </div>
+          <div class="box">
+            <h3><span><span class="ar">الحادثة</span><span class="en">Incident</span></span></h3>
+            <div class="acts">
+              <button type="button" class="act primary" id="evacBtn"><span class="ar">ابدأ الإخلاء</span><span class="en">Start evacuation</span></button>
+              <button type="button" class="act" id="fireBtn"></button>
+              <button type="button" class="act" id="closeMid"></button>
+              <button type="button" class="act" id="linkBtn" aria-pressed="false"><span class="ar">قطع الاتصال</span><span class="en">Cut connection</span></button>
+              <button type="button" class="act quiet" id="clearBtn"><span class="ar">إنهاء الحادثة</span><span class="en">End incident</span></button>
+            </div>
+          </div>
+          <div class="box">
+            <h3><span><span class="ar">سجل الأحداث</span><span class="en">Event log</span></span><button type="button" class="mini" id="logCsv"><span class="ar">تصدير CSV</span><span class="en">Export CSV</span></button></h3>
+            <ul class="log" id="log"></ul>
+          </div>
+        </aside>
+      </div>
     </div>
   </div>
 </section>
+
+<dialog class="hw" id="hwDlg" aria-labelledby="hwT">
+  <div class="hw-in">
+    <h3 id="hwT"><span><span class="ar">ربط شاشات النموذج الحقيقية</span><span class="en">Connect the real model screens</span></span><button type="button" id="hwX" aria-label="Close">×</button></h3>
+    <p><span class="ar">اللوحة ترسل اتجاه كل شاشة إلى ESP32 عبر كيبل USB، مرتين في الثانية. إذا انقطع الإرسال 3 ثوانٍ، ترجع الشاشة لوحدها إلى مسارها الافتراضي: نفس منطق الفشل الآمن.</span><span class="en">The panel sends every screen's arrow to an ESP32 over a USB cable, twice a second. If frames stop for 3 seconds, the screen falls back to its default route on its own: the same fail-safe logic.</span></p>
+    <ol>
+      <li><span class="ar">ارفع الكود المرجعي أدناه على ESP32 ووصّله بالكمبيوتر.</span><span class="en">Flash the reference sketch below to an ESP32 and plug it into the computer.</span></li>
+      <li><span class="ar">افتح الصفحة من Chrome أو Edge على الكمبيوتر، واضغط «اتصال عبر USB».</span><span class="en">Open this page in Chrome or Edge on a computer and press "Connect over USB".</span></li>
+      <li><span class="ar">غيّر نقطة التجمع أو حاكِ حريقاً، وشوف الشاشة الحقيقية تتبدل.</span><span class="en">Change the assembly point or simulate a fire, and watch the real screen change.</span></li>
+    </ol>
+    <div class="hw-row">
+      <button type="button" class="act primary" id="hwConnect"><span class="ar">اتصال عبر USB</span><span class="en">Connect over USB</span></button>
+      <button type="button" class="act" id="hwDisconnect" hidden><span class="ar">قطع الاتصال بالنموذج</span><span class="en">Disconnect model</span></button>
+      <span class="hw-st" id="hwSt"></span>
+    </div>
+    <p><b><span class="ar">الإطار المرسل الآن</span><span class="en">Frame being sent now</span></b></p>
+    <pre class="frame" id="hwFrame"></pre>
+    <table>
+      <tr><td>M,&lt;seq&gt;,&lt;point&gt;,&lt;mode&gt;,&lt;arrows&gt;</td><td><span class="ar">سطر نصي واحد، 115200 baud</span><span class="en">one text line, 115200 baud</span></td></tr>
+      <tr><td>point</td><td><span class="ar">نقطة التجمع النشطة: A أو B أو C، أو - إذا لا توجد نقطة آمنة</span><span class="en">active assembly point: A, B or C, or - when none is safe</span></td></tr>
+      <tr><td>mode</td><td><span class="ar">N طبيعي · F حريق · E إخلاء</span><span class="en">N normal · F fire · E evacuation</span></td></tr>
+      <tr><td>arrows</td><td><span class="ar">حرف لكل شاشة بالترتيب S1، S2…: U للأمام · R يمين · L يسار · D للخلف · X مغلق · O متوقفة</span><span class="en">one letter per screen in order S1, S2…: U ahead · R right · L left · D back · X closed · O off</span></td></tr>
+    </table>
+    <details>
+      <summary><span class="ar">كود ESP32 المرجعي (Arduino)</span><span class="en">ESP32 reference sketch (Arduino)</span></summary>
+      <pre id="hwCode">// Masar floor screen: reference sketch for ESP32 (Arduino core).
+// One ESP32 per screen. Set MY_ID to the screen number shown on the panel (S1 = 1).
+// Put your LED matrix drawing code inside drawArrow().
+const int  MY_ID         = 1;
+const char DEFAULT_ARROW = 'U';     // pre-approved default route for this screen
+const unsigned long TIMEOUT_MS = 3000;
+
+char shown = 0;
+unsigned long lastFrame = 0;
+String line;
+
+void drawArrow(char a) {            // U R D L = arrow, X = closed, O = off
+  if (a == shown) return;
+  shown = a;
+  // TODO: draw `a` on your LED matrix here
+  Serial.printf("S%d -> %c\n", MY_ID, a);
+}
+
+void setup() {
+  Serial.begin(115200);
+  drawArrow(DEFAULT_ARROW);
+}
+
+void loop() {
+  while (Serial.available()) {
+    char c = Serial.read();
+    if (c == '\n') {                // M,&lt;seq&gt;,&lt;point&gt;,&lt;mode&gt;,&lt;arrows&gt;
+      int p = line.lastIndexOf(',');
+      if (line.startsWith("M,") &amp;&amp; p &gt; 0 &amp;&amp; (int)line.length() &gt; p + MY_ID) {
+        drawArrow(line[p + MY_ID]);
+        lastFrame = millis();
+      }
+      line = "";
+    } else if (c != '\r') {
+      line += c;
+    }
+  }
+  if (millis() - lastFrame &gt; TIMEOUT_MS) drawArrow(DEFAULT_ARROW);   // fail-safe
+}</pre>
+    </details>
+    <div class="hw-row"><button type="button" class="mini" id="hwCopy"><span class="ar">نسخ الكود</span><span class="en">Copy sketch</span></button><span class="hw-st"><span class="ar">الكود مرجعي ولم يُجرَّب على لوحة حقيقية بعد.</span><span class="en">The sketch is a reference and has not been run on real hardware yet.</span></span></div>
+  </div>
+</dialog>
 
 <section class="block" id="prototype">
   <div class="wrap">
@@ -469,6 +650,7 @@ footer::before{content:"";position:absolute;width:900px;height:70px;background:#
   let closures = [];   // {cells,horiz,x1,y1,x2,y2}
   let closed = new Set();
   let walkers = null, walkT0 = 0;
+  let sel = -1, rev = 0, uiDirty = true, scrSt = [], incT0 = 0; const events = [];
   const now = () => performance.now() / 1000;
   const cellOf = (x, y) => Math.floor(x / CELL) + Math.floor(y / CELL) * GW;
   const insideBld = (x, y) => x > BLD[0] && x < BLD[2] && y > BLD[1] && y < BLD[3];
@@ -515,9 +697,14 @@ footer::before{content:"";position:absolute;width:900px;height:70px;background:#
   }
   const pointUnsafe = (k, t) => fireDist(PTS[k].x, PTS[k].y) < POINT_UNSAFE;
   const DIRS = [['E', 1, 0], ['S', 0, 1], ['W', -1, 0], ['N', 0, -1]];
+  function runLen(d, cx, cy, dx, dy) { let n = 0, cur = d[cx + cy * GW]; while (n < 60) { const nx = cx + dx, ny = cy + dy; if (nx < 0 || ny < 0 || nx >= GW || ny >= GH) break; const v = d[nx + ny * GW]; if (v < 0 || v >= cur) break; cur = v; cx = nx; cy = ny; n++; } return n; }
   function step(d, cx, cy, last) {
-    const cur = d[cx + cy * GW]; let pick = null, bv = cur;
-    for (const o of DIRS) { const nx = cx + o[1], ny = cy + o[2]; if (nx < 0 || ny < 0 || nx >= GW || ny >= GH) continue; const v = d[nx + ny * GW]; if (v >= 0 && (v < bv || (v === bv && pick && o[0] === last))) { bv = v; pick = o; } }
+    // steepest descent; ties go to "keep going straight", then to the direction the route continues along the longest
+    const cur = d[cx + cy * GW]; let bv = cur; const opts = [];
+    for (const o of DIRS) { const nx = cx + o[1], ny = cy + o[2]; if (nx < 0 || ny < 0 || nx >= GW || ny >= GH) continue; const v = d[nx + ny * GW]; if (v < 0 || v >= cur) continue; if (v < bv) { bv = v; opts.length = 0; } if (v === bv) opts.push(o); }
+    if (opts.length < 2) return opts[0] || null;
+    const same = opts.find(o => o[0] === last); if (same) return same;
+    let pick = opts[0], br = -1; for (const o of opts) { const r = runLen(d, cx, cy, o[1], o[2]); if (r > br) { br = r; pick = o; } }
     return pick;
   }
   function dirAt(d, x, y, prefer) {
@@ -539,20 +726,22 @@ footer::before{content:"";position:absolute;width:900px;height:70px;background:#
   }
   // A worker inside the danger zone first walks out of it, every step farther from the fire than the last, then follows the safe route.
   const cellX = k => (k % GW) * CELL + CELL / 2, cellY = k => ((k / GW) | 0) * CELL + CELL / 2, fdK = k => fireDist(cellX(k), cellY(k));
+  // closest any fire comes to the straight line a→b (so a step can never pass the nearest point of a fire)
+  const segFire = (ax, ay, bx, by) => fires.reduce((m, f) => { const dx = bx - ax, dy = by - ay, L = dx * dx + dy * dy || 1, k = Math.max(0, Math.min(1, ((f.x - ax) * dx + (f.y - ay) * dy) / L)); return Math.min(m, Math.hypot(f.x - (ax + k * dx), f.y - (ay + k * dy))); }, Infinity);
   function escapeTo(goal, x, y) {
     const s = Math.floor(x / CELL) + Math.floor(y / CELL) * GW;
     if (goal(s) && fireDist(x, y) >= FIRE_BLOCK) return [s];
     const f0 = fireDist(x, y), free = k => OPEN[k] && !closed.has(k);
     for (const gain of [6, 0]) {
-      const prev = new Map(), q = [];
-      const roots = [s, s + 1, s - 1, s + GW, s - GW].filter(k => k >= 0 && k < GW * GH && free(k) && fdK(k) >= f0 + Math.max(gain, 1));
+      const prev = new Map(), q = [], tol = gain ? 0.5 : 2;
+      const roots = [s, s + 1, s - 1, s + GW, s - GW].filter(k => k >= 0 && k < GW * GH && free(k) && fdK(k) >= f0 + Math.max(gain, 1) && segFire(x, y, cellX(k), cellY(k)) >= f0 - tol);
       roots.forEach(k => { if (!prev.has(k)) { prev.set(k, -1); q.push(k); } });
       for (let i = 0; i < q.length; i++) {
         const k = q[i];
         if (goal(k)) { const out = []; for (let c = k; c !== -1; c = prev.get(c)) out.unshift(c); return out; }
         const cx = k % GW, cy = (k / GW) | 0;
         for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nx = cx + dx, ny = cy + dy; if (nx < 0 || ny < 0 || nx >= GW || ny >= GH) continue; const nk = nx + ny * GW;
-          if (prev.has(nk) || !free(nk) || fdK(nk) < fdK(k) + gain) continue; prev.set(nk, k); q.push(nk); }
+          if (prev.has(nk) || !free(nk) || fdK(nk) < fdK(k) + gain || segFire(cellX(k), cellY(k), cellX(nk), cellY(nk)) < fdK(k) - tol) continue; prev.set(nk, k); q.push(nk); }
       }
     }
     return null;
@@ -595,7 +784,7 @@ footer::before{content:"";position:absolute;width:900px;height:70px;background:#
   function routeEdges(d, dirs) {
     const seen = new Set(), out = []; if (!d) return out;
     SCR.forEach(([x, y], i) => {
-      if (dirs[i] === 'X') return;
+      if (dirs[i] === 'X' || dirs[i] === 'O') return;
       let cx = Math.floor(x / CELL), cy = Math.floor(y / CELL), cur = d[cx + cy * GW], last = null, guard = 0; if (cur < 0) return;
       while (cur > 0 && guard++ < 600) {
         const k = cx + cy * GW; if (seen.has(k)) break; seen.add(k);
@@ -608,20 +797,21 @@ footer::before{content:"";position:absolute;width:900px;height:70px;background:#
   }
   let state = null, lastKey = '';
   function compute(t) {
-    const key = [mapId, official, linkDown, fires.length, closures.length].join('|');
+    const key = [mapId, official, linkDown, fires.length, closures.length, rev].join('|');
     if (key === lastKey && state) return state;
     lastKey = key;
     const dist = {}; KEYS.forEach(k => dist[k] = bfs(PTS[k], t, true));
     const distStatic = bfs(PTS[official], t, false);
     let active = official, reason = T('النقطة المعتمدة من مدير السلامة', 'Set by the safety manager');
-    const reach = k => SCR.filter(([x, y]) => dist[k][cellOf(x, y)] >= 0).length;
+    const reach = k => SCR.filter(([x, y], i) => !(scrSt[i] && scrSt[i].off) && dist[k][cellOf(x, y)] >= 0).length;
     if (pointUnsafe(official, t) || reach(official) === 0) {
       const cand = KEYS.filter(k => k !== official && !pointUnsafe(k, t) && reach(k) > 0).sort((a, b) => reach(b) - reach(a));
       if (cand.length) { active = cand[0]; reason = T('النقطة المعتمدة غير آمنة، حُوّل التوجيه تلقائياً', 'Official point unsafe; rerouted automatically'); }
       else { active = null; reason = T('لا توجد نقطة آمنة', 'No safe point'); }
     }
     if (linkDown) reason = T('الاتصال مقطوع: الشاشات على المسار الافتراضي', 'Connection lost: screens on default route');
-    const dirs = SCR.map(([x, y]) => {
+    const dirs = SCR.map(([x, y], i) => {
+      if (scrSt[i] && scrSt[i].off) return 'O';
       if (linkDown) return dirAt(distStatic, x, y);
       const nearFire = fireDist(x, y) < SCREEN_X;
       if (nearFire || !active) return 'X';
@@ -657,7 +847,8 @@ footer::before{content:"";position:absolute;width:900px;height:70px;background:#
       const px = cx - w / 2 + pad + cw * (c + .5), py = cy - h / 2 + pad + ch * (r + .5);
       const u = (px - cx) / (h / 2 - pad), v = (py - cy) / (h / 2 - pad);
       let on = false;
-      if (dir === 'X') on = (Math.abs(u - v) < 0.25 || Math.abs(u + v) < 0.25) && Math.abs(u) < 0.9;
+      if (dir === 'O') on = false;
+      else if (dir === 'X') on = (Math.abs(u - v) < 0.25 || Math.abs(u + v) < 0.25) && Math.abs(u) < 0.9;
       else { const X = u * ca - v * sa, Y = u * sa + v * ca; on = (X > -0.95 && X < 0.15 && Math.abs(Y) < 0.26) || (X >= 0.1 && X < 0.95 && Math.abs(Y) < (0.95 - X)); }
       g.beginPath(); g.arc(px, py, Math.max(0.8, Math.min(cw, ch) * 0.36), 0, 7);
       if (on) { g.fillStyle = dir === 'X' ? '#FF3B4E' : '#39E27A'; g.globalAlpha = dir === 'X' ? (Math.sin(t * 9) > 0 ? 1 : .45) : 0.65 + 0.35 * (Math.sin((u * Math.cos(a) + v * Math.sin(a)) * 3.5 - t * 8) > -0.2 ? 1 : 0); g.fill(); g.globalAlpha = 1; }
@@ -771,11 +962,15 @@ footer::before{content:"";position:absolute;width:900px;height:70px;background:#
       g.strokeStyle = 'rgba(232,185,35,0.38)'; g.lineWidth = Math.max(2, 22 * S); g.beginPath(); g.moveTo(p0, q0); g.lineTo(p1, q1); g.stroke(); });
     // ground screens
     SCR.forEach(([x, y, , ox = 0, oy = 0], i) => { const [px, py] = P(x + ox, y + oy), w = Math.max(28, 132 * S), h = w * 0.6; const dir = st.dirs[i];
-      led(px, py, w, h, dir, t, linkDown ? '#FFB020' : dir === 'X' ? '#FF3B4E' : '#2C6B45'); });
+      led(px, py, w, h, dir, t, dir === 'O' ? '#4A4F57' : linkDown ? '#FFB020' : dir === 'X' ? '#FF3B4E' : '#2C6B45');
+      const blink = scrSt[i] && scrSt[i].blink > t && Math.sin(t * 14) > 0;
+      if (sel === i || blink) { rr(px - w / 2 - 5, py - h / 2 - 5, w + 10, h + 10, 6 * S + 4); g.lineWidth = Math.max(2, 5 * S); g.strokeStyle = blink ? '#FFFFFF' : '#F0587D'; g.stroke(); }
+      pill(sid(i), px, py - h / 2 - Math.max(10, 21 * S), Math.max(9, 19 * S), sel === i ? '#FF9DB5' : '#C9D1DB'); });
     // readout
     document.getElementById('activeOut').textContent = st.active ? T(PTS[st.active].ar, PTS[st.active].en) : '—';
     const ro = document.getElementById('reasonOut'); ro.textContent = st.reason; ro.className = (linkDown || st.active !== official) ? 'warn' : '';
-    document.getElementById('syncOut').textContent = linkDown ? T('وضع افتراضي', 'Default mode') : `${SCR.length}/${SCR.length}`;
+    document.getElementById('syncOut').textContent = linkDown ? T('وضع افتراضي', 'Default mode') : `${scrSt.filter(s => !s.off).length}/${SCR.length}`;
+    renderUI(st, t);
     let n = 0; SENS.forEach(([x, y]) => { if (fires.some(f => Math.hypot(x - f.x, y - f.y) < 650 && t - f.t0 > Math.hypot(x - f.x, y - f.y) / 900)) n++; });
     document.getElementById('sensOut').textContent = n;
     requestAnimationFrame(draw);
@@ -783,7 +978,7 @@ footer::before{content:"";position:absolute;width:900px;height:70px;background:#
 
   /* log */
   const logEl = document.getElementById('log');
-  function log(msg) { const li = document.createElement('li'); const tm = document.createElement('time'); tm.textContent = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' }); const s = document.createElement('span'); s.textContent = msg; li.append(tm, s); logEl.prepend(li); while (logEl.children.length > 6) logEl.lastChild.remove(); }
+  function log(msg) { const d = new Date(); events.push({ t: d, msg }); const li = document.createElement('li'); const tm = document.createElement('time'); tm.textContent = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' }); const s = document.createElement('span'); s.textContent = msg; li.append(tm, s); logEl.prepend(li); while (logEl.children.length > 40) logEl.lastChild.remove(); }
   function toWorld(e) { const r = cv.getBoundingClientRect(); const x = (e.clientX - r.left) / r.width * (VW[2] - VW[0]) + VW[0], y = (e.clientY - r.top) / r.height * (VW[3] - VW[1]) + VW[1]; return [x, y]; }
   function walkable(x, y) { return x > 0 && y > 0 && OPEN[cellOf(x, y)] && insideBld(x, y); }
 
@@ -801,20 +996,21 @@ footer::before{content:"";position:absolute;width:900px;height:70px;background:#
     SENS = []; M.sensX.forEach(x => M.sensY.forEach(y => { if (walkable(x, y)) SENS.push([x, y]); }));
     official = M.official; fires = []; closures = []; closed = new Set(); walkers = null; linkDown = false; state = null; lastKey = '';
     document.getElementById('linkBtn').setAttribute('aria-pressed', 'false');
+    initScreens(); try { localStorage.setItem('masar-map', id); } catch (e) {}
     labelUI(); resize();
     if (three) three.setMap();
   }
 
-  cv.addEventListener('click', e => { const [x, y] = toWorld(e); clickAt(x, y); });
   document.getElementById('mapSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (!b || b.dataset.map === mapId) return; setMap(b.dataset.map);
     log(T(`فُتحت خريطة ${M.name[0]}`, `${M.name[1]} map loaded`)); });
   document.getElementById('points').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; official = b.dataset.p; labelUI();
     log(T(`نقطة التجمع المعتمدة الآن ${PTS[official].ar}، تحدّثت ${SCR.length} شاشات`, `Official assembly point is now ${official}; ${SCR.length} screens updated`)); });
   document.getElementById('modes').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; mode = b.dataset.m;
-    document.querySelectorAll('#modes button').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.m === mode))); });
-  document.getElementById('fireBtn').addEventListener('click', () => { const [hx, hy] = M.hazard.at; if (!fires.some(f => Math.hypot(f.x - hx, f.y - hy) < 160)) { fires.push({ x: hx, y: hy, t0: now() }); log(T(M.hazard.log[0], M.hazard.log[1])); } });
+    document.querySelectorAll('#modes button').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.m === mode)));
+    cv.classList.toggle('edit', mode === 'edit'); document.getElementById('editBar').hidden = mode !== 'edit'; uiDirty = true; resize(); });
+  document.getElementById('fireBtn').addEventListener('click', () => { const [hx, hy] = M.hazard.at; if (!fires.some(f => Math.hypot(f.x - hx, f.y - hy) < 160)) { fires.push({ x: hx, y: hy, t0: now() }); alarm(); log(T(M.hazard.log[0], M.hazard.log[1])); } });
   document.getElementById('closeMid').addEventListener('click', () => { const { x, y } = M.closeAt; if (!closures.some(c => segDist(c, x, y) < 80)) { const c = makeClosure(x, y); if (c) { closures.push(c); rebuildClosed(); log(T(M.closeAt.log[0], M.closeAt.log[1])); } } });
-  document.getElementById('clearBtn').addEventListener('click', () => { fires = []; closures = []; closed = new Set(); walkers = null; linkDown = false; document.getElementById('linkBtn').setAttribute('aria-pressed', 'false'); log(T('أُعيد ضبط المحاكاة', 'Simulator reset')); });
+  document.getElementById('clearBtn').addEventListener('click', () => { fires = []; closures = []; closed = new Set(); walkers = null; linkDown = false; document.getElementById('linkBtn').setAttribute('aria-pressed', 'false'); log(T('انتهت الحادثة، ورجعت اللوحة للوضع الطبيعي', 'Incident ended; the panel is back to normal')); });
   document.getElementById('linkBtn').addEventListener('click', e => { linkDown = !linkDown; e.currentTarget.setAttribute('aria-pressed', String(linkDown));
     log(linkDown ? T('انقطع الاتصال: كل شاشة عادت إلى مسارها الافتراضي المعتمد', 'Connection lost: every screen fell back to its approved default route') : T('عاد الاتصال وتزامنت الشاشات', 'Connection restored; screens synced')); });
   document.getElementById('evacBtn').addEventListener('click', () => {
@@ -839,10 +1035,11 @@ footer::before{content:"";position:absolute;width:900px;height:70px;background:#
   }
   function clickAt(x, y) {
     if (!walkable(x, y)) { log(T('اضغط على ممر داخل الموقع', 'Click a walkway inside the site')); return; }
+    if (mode === 'edit') { addScreen(x, y); return; }
     if (mode === 'fire') {
       const hit = fires.findIndex(f => Math.hypot(f.x - x, f.y - y) < 160);
       if (hit >= 0) { fires.splice(hit, 1); log(T('أُطفئ الحريق', 'Fire put out')); }
-      else { fires.push({ x, y, t0: now() }); log(T('كاشف رصد حرارة ودخاناً.. الحساسات القريبة تؤكد الموقع', 'A detector sensed heat and smoke; nearby sensors are confirming the location'));
+      else { fires.push({ x, y, t0: now() }); alarm(); log(T('كاشف رصد حرارة ودخاناً.. الحساسات القريبة تؤكد الموقع', 'A detector sensed heat and smoke; nearby sensors are confirming the location'));
         setTimeout(() => log(T('تأكدت منطقة الحريق، والشاشات أعادت التوجيه', 'Fire zone confirmed; screens rerouted')), 1500); }
     } else {
       const hit = closures.findIndex(c => segDist(c, x, y) < 80);
@@ -855,7 +1052,7 @@ footer::before{content:"";position:absolute;width:900px;height:70px;background:#
   const QT = { E: 0, S: 1, W: 2, N: 3 };
   const OPP = { E: 'W', W: 'E', S: 'N', N: 'S' };
   const ROTY = { E: -Math.PI / 2, W: Math.PI / 2, S: Math.PI, N: 0 };
-  function relArrow(dir, heading) { if (dir === 'X') return 'X'; return ['U', 'R', 'D', 'L'][(QT[dir] - QT[heading] + 4) % 4]; }
+  function relArrow(dir, heading) { if (dir === 'X' || dir === 'O') return dir; return ['U', 'R', 'D', 'L'][(QT[dir] - QT[heading] + 4) % 4]; }
 
   let three = null, view = '2d', loading = false;
   const box3 = document.getElementById('view3d'), msg3 = document.getElementById('msg3');
@@ -976,7 +1173,7 @@ footer::before{content:"";position:absolute;width:900px;height:70px;background:#
       { const s = sprite(W, M.hazard.ar, M.hazard.en, '#FFFFFF', 'rgba(20,24,30,0.72)', 0.55); s.position.set(W3((hb[0] + hb[2]) / 2), 2.0, W3((hb[1] + hb[3]) / 2)); }
     }
 
-    function buildWorld() {
+    function buildWorld(keep) {
       disposeGroup(world); disposeGroup(dyn); sprites = []; jib = null; drum = null; dynKey = '';
       const out = M.outdoor;
       scene.background = new THREE.Color(out ? 0xBCD3E4 : 0x10141A); scene.fog = new THREE.Fog(out ? 0xBCD3E4 : 0x10141A, out ? 50 : 32, out ? 110 : 60);
@@ -1019,16 +1216,16 @@ footer::before{content:"";position:absolute;width:900px;height:70px;background:#
         const hh = new THREE.Mesh(new THREE.SphereGeometry(0.17, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2), hat); hh.position.y = 1.66;
         g3.add(legL, legR, body, head, hh); world.add(g3); return { g3, legL, legR }; });
       controls.maxDistance = out ? 70 : 45;
-      const [pos, tg] = M.cams.over; camera.position.set(...pos); controls.target.set(...tg); controls.update();
+      if (!keep) { const [pos, tg] = M.cams.over; camera.position.set(...pos); controls.target.set(...tg); controls.update(); }
     }
     function paintFace(f, dir, t, amber) {
       const x = f.x, W = 160, H = 92; x.fillStyle = '#05070A'; x.fillRect(0, 0, W, H);
-      x.strokeStyle = amber ? '#FFB020' : dir === 'X' ? '#FF3B4E' : '#1F5E3A'; x.lineWidth = 6; x.strokeRect(3, 3, W - 6, H - 6);
+      x.strokeStyle = dir === 'O' ? '#3A3F46' : amber ? '#FFB020' : dir === 'X' ? '#FF3B4E' : '#1F5E3A'; x.lineWidth = 6; x.strokeRect(3, 3, W - 6, H - 6);
       const rel = relArrow(dir, f.heading), cols = 14, rows = 8, pad = 10, cw = (W - 2 * pad) / cols, ch = (H - 2 * pad) / rows;
       const a = { U: -Math.PI / 2, R: 0, D: Math.PI / 2, L: Math.PI }[rel] || 0, ca = Math.cos(-a), sa = Math.sin(-a);
       for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
         const px = pad + cw * (c + .5), py = pad + ch * (r + .5), u = (px - W / 2) / (H / 2 - pad), v = (py - H / 2) / (H / 2 - pad);
-        let on; if (rel === 'X') on = (Math.abs(u - v) < 0.25 || Math.abs(u + v) < 0.25) && Math.abs(u) < 0.9;
+        let on; if (rel === 'O') on = false; else if (rel === 'X') on = (Math.abs(u - v) < 0.25 || Math.abs(u + v) < 0.25) && Math.abs(u) < 0.9;
         else { const X = u * ca - v * sa, Y = u * sa + v * ca; on = (X > -0.95 && X < 0.15 && Math.abs(Y) < 0.26) || (X >= 0.1 && X < 0.95 && Math.abs(Y) < (0.95 - X)); }
         x.beginPath(); x.arc(px, py, Math.min(cw, ch) * 0.4, 0, 7);
         if (on) { x.fillStyle = rel === 'X' ? '#FF3B4E' : '#4DFF8E'; x.globalAlpha = rel === 'X' ? (Math.sin(t * 9) > 0 ? 1 : .5) : 0.8 + 0.2 * (Math.sin((u * Math.cos(a) + v * Math.sin(a)) * 3.5 - t * 8) > -0.2 ? 1 : 0); x.fill(); x.globalAlpha = 1; }
@@ -1099,7 +1296,7 @@ footer::before{content:"";position:absolute;width:900px;height:70px;background:#
       people.forEach((p, i) => { const w = wp.list[i]; if (!w) { p.g3.visible = false; return; } p.g3.visible = true; p.g3.position.set(W3(w.x), 0, W3(w.y)); p.g3.rotation.y = -w.ang; const sw = w.walking ? Math.sin(t * 10 + i) * 0.5 : 0; p.legL.rotation.z = sw; p.legR.rotation.z = -sw; });
       renderer.render(scene, camera);
     }
-    three = { relabel: () => sprites.forEach(s => s.userData.paint()), size, setMap: () => { buildWorld(); size(); } };
+    three = { relabel: () => sprites.forEach(s => s.userData.paint()), size, setMap: () => { buildWorld(); size(); }, relayout: () => { buildWorld(true); } };
     loop();
   }
   function rndK(i) { const x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
@@ -1111,16 +1308,165 @@ footer::before{content:"";position:absolute;width:900px;height:70px;background:#
     if (view === '3d') { init3D(); if (three) three.size(); }
   });
 
+  /* ================= control panel ================= */
+  const $ = id => document.getElementById(id);
+  const BATT = [96, 91, 88, 84, 97, 79, 93, 86, 90, 82, 95, 87, 89, 92];
+  const DEF_SCR = {}; Object.keys(MAPS).forEach(k => { DEF_SCR[k] = JSON.stringify(MAPS[k].scr); });
+  Object.keys(MAPS).forEach(id => { try { const s = JSON.parse(localStorage.getItem('masar-layout-' + id)); if (Array.isArray(s) && s.length >= 2 && s.length <= 14 && s.every(a => Array.isArray(a) && a.length >= 3 && 'NESW'.includes(a[2]))) MAPS[id].scr = s; } catch (e) {} });
+  function saveLayout() { try { localStorage.setItem('masar-layout-' + mapId, JSON.stringify(SCR)); } catch (e) {} }
+  function initScreens() { scrSt = SCR.map((_, i) => ({ off: false, blink: 0, batt: BATT[i % BATT.length] })); sel = -1; rev++; uiDirty = true; }
+  const sid = i => 'S' + (i + 1);
+
+  /* layout editing: screens are portable, so the panel lets you move them */
+  function autoSide(x, y) {
+    // front face toward the people walking the current route; the sign stands at the nearer edge of the walkway
+    const cx = Math.floor(x / CELL), cy = Math.floor(y / CELL);
+    const run = (dx, dy) => { let n = 0; while (n < 8) { const a = cx + dx * (n + 1), b = cy + dy * (n + 1); if (a < 0 || b < 0 || a >= GW || b >= GH || !OPEN[a + b * GW]) break; n++; } return n; };
+    const E = run(1, 0), W = run(-1, 0), S2 = run(0, 1), N = run(0, -1);
+    const st = compute(now()), d = st.routeD ? dirAt(st.routeD, x, y) : 'X';
+    const face = 'NESW'.includes(d) ? d : (E + W >= S2 + N ? 'E' : 'S');
+    if (face === 'E' || face === 'W') return [face, 0, (N <= S2 ? -1 : 1) * Math.min(100, Math.min(N, S2) * CELL + 12)];
+    return [face, (W <= E ? -1 : 1) * Math.min(100, Math.min(W, E) * CELL + 12), 0];
+  }
+  function placeScreen(i, x, y) { const sx = Math.floor(x / CELL) * CELL + CELL / 2, sy = Math.floor(y / CELL) * CELL + CELL / 2; if (SCR[i][0] === sx && SCR[i][1] === sy) return; SCR[i] = [sx, sy, ...autoSide(sx, sy)]; rev++; uiDirty = true; }
+  function addScreen(x, y) {
+    if (SCR.length >= 14) { log(T('الحد الأقصى 14 شاشة في هذا العرض', 'This demo allows up to 14 screens')); return; }
+    const sx = Math.floor(x / CELL) * CELL + CELL / 2, sy = Math.floor(y / CELL) * CELL + CELL / 2;
+    SCR.push([sx, sy, ...autoSide(sx, sy)]); scrSt.push({ off: false, blink: now() + 2.5, batt: BATT[(SCR.length - 1) % BATT.length] });
+    rev++; sel = SCR.length - 1; uiDirty = true; saveLayout(); if (three) three.relayout();
+    log(T(`أُضيفت الشاشة ${sid(sel)}، وانضمت للتوجيه`, `Screen ${sid(sel)} added and joined the guidance`));
+  }
+  function removeScreen(i) {
+    if (SCR.length <= 2) { log(T('لازم تبقى شاشتان على الأقل', 'At least two screens must remain')); return; }
+    SCR.splice(i, 1); scrSt.splice(i, 1); sel = -1; rev++; uiDirty = true; saveLayout(); if (three) three.relayout();
+    log(T('حُذفت شاشة، وأُعيد ترقيم البقية', 'A screen was removed; the rest were renumbered'));
+  }
+  $('layoutReset').addEventListener('click', () => { M.scr = JSON.parse(DEF_SCR[mapId]); SCR = M.scr; try { localStorage.removeItem('masar-layout-' + mapId); } catch (e) {} initScreens(); if (three) three.relayout(); log(T('رجع ترتيب الشاشات الأصلي', 'Original screen layout restored')); });
+
+  /* pointer handling on the plan: select, drag (move tool), or use the tool */
+  let drag = null;
+  function hitScreen(x, y) { let best = -1, bd = 95; SCR.forEach(([sx, sy, , ox = 0, oy = 0], i) => { const d = Math.hypot(sx + ox - x, sy + oy - y); if (d < bd) { bd = d; best = i; } }); return best; }
+  cv.addEventListener('pointerdown', e => { const [x, y] = toWorld(e); const i = hitScreen(x, y); drag = { i, x0: e.clientX, y0: e.clientY, moved: false }; if (i >= 0 && mode === 'edit') { try { cv.setPointerCapture(e.pointerId); } catch (err) {} } });
+  cv.addEventListener('pointermove', e => { if (!drag || drag.i < 0 || mode !== 'edit') return; if (!drag.moved && Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) < 6) return; drag.moved = true; sel = drag.i; const [x, y] = toWorld(e); if (walkable(x, y)) placeScreen(drag.i, x, y); });
+  cv.addEventListener('pointerup', e => { if (!drag) return; const d = drag; drag = null; const [x, y] = toWorld(e);
+    if (d.moved) { saveLayout(); uiDirty = true; if (three) three.relayout(); log(T(`نُقلت الشاشة ${sid(d.i)}، وتحدّث التوجيه`, `Screen ${sid(d.i)} moved; guidance updated`)); return; }
+    if (d.i >= 0) { select(d.i); return; }
+    clickAt(x, y); });
+  cv.addEventListener('pointercancel', () => { drag = null; });
+  function select(i) { sel = sel === i ? -1 : i; uiDirty = true; }
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && sel >= 0 && !$('hwDlg').open) { sel = -1; uiDirty = true; } });
+
+  /* fleet strip + inspector + status bar, refreshed only when something changed */
+  const ARW = 'M-52,-12 L8,-12 L8,-30 L54,0 L8,30 L8,12 L-52,12 Z';
+  const DEG = { E: 0, S: 90, W: 180, N: -90 }, RDEG = { R: 0, D: 90, L: 180, U: -90 };
+  let uiSt = null, uiLang = '', sysKey = '';
+  function renderUI(st, t) {
+    if (st !== uiSt || uiDirty || uiLang !== lang) {
+      uiSt = st; uiDirty = false; uiLang = lang;
+      $('fleetN').textContent = `(${SCR.length})`;
+      $('fleet').innerHTML = SCR.map((s, i) => { const d = st.dirs[i], cls = d === 'O' ? 'off' : d === 'X' ? 'x' : linkDown ? 'amber' : 'ok';
+        const icon = d === 'O' ? '<svg viewBox="-60 -34 120 68"><rect x="-30" y="-6" width="60" height="12" rx="6"/></svg>' : d === 'X' ? '<svg viewBox="-60 -34 120 68"><path fill="none" stroke="#FF3B4E" stroke-width="14" stroke-linecap="round" d="M-22,-22 L22,22 M22,-22 L-22,22"/></svg>' : `<svg viewBox="-60 -60 120 120"><path transform="rotate(${DEG[d]})" d="${ARW}"/></svg>`;
+        const stx = d === 'O' ? T('متوقفة', 'Off') : d === 'X' ? T('مغلق', 'Closed') : linkDown ? T('افتراضي', 'Default') : T('تعمل', 'Online');
+        return `<button type="button" class="tile" data-i="${i}" data-s="${cls}" aria-pressed="${sel === i}">${icon}<b class="num">${sid(i)}</b><small>${stx} · <bdi dir="ltr" class="num">${scrSt[i].batt}%</bdi></small></button>`; }).join('');
+      const ins = $('insp'); ins.hidden = sel < 0;
+      if (sel >= 0) { const d = st.dirs[sel], rel = relArrow(d, SCR[sel][2]), s = scrSt[sel];
+        $('inspId').textContent = sid(sel);
+        const stEl = $('inspSt'); stEl.dataset.s = s.off ? 'off' : linkDown ? 'link' : 'ok'; stEl.textContent = s.off ? T('خارج الخدمة', 'Out of service') : linkDown ? T('مسار افتراضي', 'Default route') : T('متصلة', 'Online');
+        $('inspA').style.display = (rel === 'X' || rel === 'O') ? 'none' : ''; $('inspA').setAttribute('fill', linkDown ? '#FFB020' : '#3BE37A'); $('inspXm').hidden = rel !== 'X';
+        $('inspArrow').style.transform = RDEG[rel] !== undefined ? `rotate(${RDEG[rel]}deg)` : 'none';
+        $('inspDir').textContent = { U: T('كمّل للأمام', 'Straight ahead'), R: T('انعطف يميناً', 'Turn right'), L: T('انعطف يساراً', 'Turn left'), D: T('ارجع للخلف', 'Turn back'), X: T('مغلق، لا تمر', 'Closed, do not pass'), O: '—' }[rel];
+        $('inspTo').textContent = (rel === 'X' || rel === 'O') ? '—' : linkDown ? T(`النقطة ${PTS[official].ar} (افتراضي)`, `Point ${official} (default)`) : st.active ? T(`النقطة ${PTS[st.active].ar}`, `Point ${st.active}`) : '—';
+        $('inspBat').textContent = s.batt + '%';
+        $('inspOff').textContent = s.off ? T('إرجاع للخدمة', 'Back in service') : T('إخراج من الخدمة', 'Take out of service');
+        $('inspDel').hidden = mode !== 'edit'; }
+    }
+    // system state + incident timer
+    const evac = !!(walkers && !walkers.done), s = linkDown ? 'link' : evac ? 'evac' : fires.length ? 'fire' : 'ok';
+    if (s === 'ok') incT0 = 0; else if (!incT0) incT0 = Date.now();
+    const sec = incT0 ? Math.floor((Date.now() - incT0) / 1000) : 0, tm = incT0 ? String(Math.floor(sec / 60)).padStart(2, '0') + ':' + String(sec % 60).padStart(2, '0') : '';
+    const key = s + lang + tm + (fires.length ? 1 : 0);
+    if (key !== sysKey) { sysKey = key; $('sysState').dataset.s = s;
+      $('sysText').textContent = { ok: T('الوضع طبيعي', 'All normal'), fire: T('إنذار حريق', 'Fire alarm'), evac: fires.length ? T('إخلاء جارٍ · حريق', 'Evacuation · fire') : T('إخلاء جارٍ', 'Evacuation in progress'), link: T('فشل آمن: الاتصال مقطوع', 'Fail-safe: connection lost') }[s];
+      const it = $('incTimer'); it.hidden = !incT0; it.textContent = tm; }
+  }
+  $('fleet').addEventListener('click', e => { const b = e.target.closest('.tile'); if (b) select(+b.dataset.i); });
+  $('inspX').addEventListener('click', () => { sel = -1; uiDirty = true; });
+  $('inspBlink').addEventListener('click', () => { if (sel < 0) return; scrSt[sel].blink = now() + 4; log(T(`الشاشة ${sid(sel)} تومض للتعرّف عليها`, `Screen ${sid(sel)} is flashing so you can find it`)); });
+  $('inspOff').addEventListener('click', () => { if (sel < 0) return; const s = scrSt[sel]; s.off = !s.off; rev++; uiDirty = true;
+    log(s.off ? T(`الشاشة ${sid(sel)} خرجت من الخدمة، وبقية الشاشات تكمل التوجيه`, `Screen ${sid(sel)} is out of service; the others keep guiding`) : T(`الشاشة ${sid(sel)} رجعت للخدمة`, `Screen ${sid(sel)} is back in service`)); });
+  $('inspDel').addEventListener('click', () => { if (sel >= 0) removeScreen(sel); });
+
+  /* clock, log export, alarm sound, fullscreen */
+  const tick = () => { $('clock').textContent = new Date().toLocaleTimeString('en-GB'); }; tick(); setInterval(tick, 1000);
+  $('logCsv').addEventListener('click', () => {
+    const rows = [['date', 'time', 'event']].concat(events.map(e => [e.t.toISOString().slice(0, 10), e.t.toLocaleTimeString('en-GB'), e.msg]));
+    const csv = '﻿' + rows.map(r => r.map(c => '"' + String(c).replace(/"/g, '""') + '"').join(',')).join('\r\n');
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = 'masar-log-' + new Date().toISOString().slice(0, 16).replace(/[-:T]/g, '') + '.csv';
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  });
+  let soundOn = false, actx = null;
+  function alarm() { if (!soundOn) return; try { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); const t0 = actx.currentTime;
+    [0, .32, .64].forEach((d, i) => { const o = actx.createOscillator(), gn = actx.createGain(); o.type = 'square'; o.frequency.value = i % 2 ? 660 : 880;
+      gn.gain.setValueAtTime(0.0001, t0 + d); gn.gain.exponentialRampToValueAtTime(0.1, t0 + d + .02); gn.gain.exponentialRampToValueAtTime(0.0001, t0 + d + .27);
+      o.connect(gn); gn.connect(actx.destination); o.start(t0 + d); o.stop(t0 + d + .3); }); } catch (e) {} }
+  $('sndBtn').addEventListener('click', e => { soundOn = !soundOn; e.currentTarget.setAttribute('aria-pressed', String(soundOn)); if (soundOn) alarm(); });
+  $('fsBtn').addEventListener('click', () => { const el = $('cp'); if (document.fullscreenElement) document.exitFullscreen(); else if (el.requestFullscreen) el.requestFullscreen().catch(() => {}); });
+  document.addEventListener('fullscreenchange', () => { resize(); if (three) three.size(); });
+
+  /* auto demo: walks through the story on its own, with captions on the plan */
+  let tour = null;
+  function tourStop() { if (tour) tour.forEach(clearTimeout); tour = null; $('tourCap').hidden = true; $('tourBtn').setAttribute('aria-pressed', 'false'); }
+  function tourStart() {
+    tourStop(); $('tourBtn').setAttribute('aria-pressed', 'true'); $('cp').scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+    const steps = [
+      [0, () => { $('clearBtn').click(); }, ['الوضع الطبيعي: كل شاشة تقود إلى التي بعدها حتى نقطة التجمع', 'Normal: each screen leads to the next, all the way to the assembly point']],
+      [4500, () => { $('pt' + KEYS.find(k => k !== official)).click(); }, ['مدير السلامة ينقل نقطة التجمع بضغطة، وكل الشاشات تتبدل فوراً', 'The safety manager moves the assembly point in one click, and every screen follows']],
+      [9500, () => { $('fireBtn').click(); }, ['كاشف يرصد حريقاً: المنطقة تنغلق فوراً والمسارات تلتف بعيداً عنها', 'A detector senses fire: the zone closes at once and routes go around it']],
+      [15000, () => { $('evacBtn').click(); }, ['الإخلاء: العاملون يتبعون الشاشات، ولا أحد يمر جنب الحريق', 'Evacuation: workers follow the screens, and nobody passes the fire']],
+      [24500, () => { if (!linkDown) $('linkBtn').click(); }, ['انقطع الاتصال: كل شاشة ترجع لمسارها الافتراضي المعتمد', 'Connection lost: every screen falls back to its approved default route']],
+      [30000, () => { if (linkDown) $('linkBtn').click(); }, ['رجع الاتصال، وتزامنت الشاشات من جديد', 'Connection restored; the screens are in sync again']],
+      [34500, () => { tourStop(); $('clearBtn').click(); }, null]
+    ];
+    tour = steps.map(([ms, fn, cap]) => setTimeout(() => { fn(); if (cap) { const c = $('tourCap'); c.textContent = T(cap[0], cap[1]); c.hidden = false; } }, ms));
+  }
+  $('tourBtn').addEventListener('click', () => { if (tour) { tourStop(); log(T('أُوقف العرض التلقائي', 'Auto demo stopped')); } else { tourStart(); log(T('بدأ العرض التلقائي', 'Auto demo started')); } });
+
+  /* real hardware: send every screen's arrow to an ESP32 over USB (Web Serial) */
+  let port = null, writer = null, seq = 0;
+  const enc = new TextEncoder();
+  function hwFrame(st) { const m = fires.length ? 'F' : (walkers && !walkers.done) ? 'E' : 'N'; return `M,${seq++ % 10000},${st.active || '-'},${m},${SCR.map((s, i) => relArrow(st.dirs[i], s[2])).join('')}`; }
+  function hwStatus(msg, cls) { const el = $('hwSt'); el.textContent = msg; el.className = 'hw-st' + (cls ? ' ' + cls : ''); }
+  function hwUI() { const on = !!writer; $('hwConnect').hidden = on; $('hwDisconnect').hidden = !on; $('hwBtn').classList.toggle('on', on);
+    const tg = $('srcTag'); tg.classList.toggle('on', on); tg.textContent = on ? T('متصل بالنموذج عبر USB', 'Model connected over USB') : T('وضع تجريبي', 'Demo mode'); }
+  async function hwDrop(quiet) { const w = writer, p = port; writer = null; port = null; try { if (w) w.releaseLock(); } catch (e) {} try { if (p) await p.close(); } catch (e) {} hwUI(); if (!quiet) { hwStatus(T('انفصل النموذج', 'Model disconnected'), 'err'); log(T('انفصل النموذج عن اللوحة', 'The model was disconnected from the panel')); } }
+  $('hwConnect').addEventListener('click', async () => {
+    if (!('serial' in navigator)) { hwStatus(T('هذا المتصفح لا يدعم الربط عبر USB. استخدم Chrome أو Edge على الكمبيوتر.', 'This browser cannot connect over USB. Use Chrome or Edge on a computer.'), 'err'); return; }
+    try { const p = await navigator.serial.requestPort(); await p.open({ baudRate: 115200 }); port = p; writer = p.writable.getWriter(); hwUI();
+      hwStatus(T('متصل، والإطارات تُرسل الآن', 'Connected; frames are being sent'), 'ok'); log(T('اتصلت اللوحة بالنموذج عبر USB', 'The panel connected to the model over USB')); }
+    catch (e) { if (e && e.name !== 'NotFoundError') hwStatus(T('تعذّر فتح المنفذ. تأكد أنه غير مفتوح في برنامج آخر.', 'Could not open the port. Make sure no other program is using it.'), 'err'); }
+  });
+  $('hwDisconnect').addEventListener('click', () => { hwDrop(true); hwStatus(T('قُطع الاتصال بالنموذج', 'Model disconnected')); });
+  if ('serial' in navigator) navigator.serial.addEventListener('disconnect', e => { if (port && e.target === port) hwDrop(false); });
+  setInterval(() => { if (!M) return; const st = compute(now());
+    if (linkDown) { $('hwFrame').textContent = T('لا إرسال: الاتصال مقطوع، والشاشات على مسارها الافتراضي', 'Nothing sent: connection cut, screens on their default route'); return; }
+    const f = hwFrame(st); $('hwFrame').textContent = f; if (writer) writer.write(enc.encode(f + '\n')).catch(() => hwDrop(false)); }, 500);
+  $('hwBtn').addEventListener('click', () => { const d = $('hwDlg'); if (d.showModal) d.showModal(); else d.setAttribute('open', ''); });
+  $('hwX').addEventListener('click', () => $('hwDlg').close());
+  $('hwDlg').addEventListener('click', e => { if (e.target === $('hwDlg')) $('hwDlg').close(); });
+  $('hwCopy').addEventListener('click', e => { const b = e.currentTarget, o = b.innerHTML, txt = $('hwCode').textContent; const done = () => { b.textContent = T('تم النسخ', 'Copied'); setTimeout(() => { b.innerHTML = o; }, 1400); };
+    if (navigator.clipboard) navigator.clipboard.writeText(txt).then(done).catch(() => {}); });
+
   /* language */
   function applyLang() {
     page.dataset.lang = lang; page.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr'); page.setAttribute('lang', lang);
     document.documentElement.lang = lang;
     document.getElementById('langBtn').textContent = lang === 'ar' ? 'English' : 'العربية';
-    heroPaint(); lastKey = ''; if (M) labelUI(); if (three) three.relabel();
+    heroPaint(); lastKey = ''; uiDirty = true; if (M) labelUI(); hwUI(); if (three) three.relabel();
   }
   document.getElementById('langBtn').addEventListener('click', () => { lang = lang === 'ar' ? 'en' : 'ar'; try { localStorage.setItem('masar-lang', lang); } catch (e) {} applyLang(); });
 
-  setMap('site');
+  let startMap = 'site'; try { const m = localStorage.getItem('masar-map'); if (MAPS[m]) startMap = m; } catch (e) {}
+  setMap(startMap);
   applyLang();
   window.addEventListener('resize', () => { resize(); });
   log(T('الوضع الطبيعي: كل الشاشات تشير إلى نقطة التجمع المعتمدة', 'Normal state: every screen points to the official assembly point'));
