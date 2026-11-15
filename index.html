@@ -456,17 +456,19 @@ footer::before{content:"";position:absolute;width:900px;height:70px;background:#
         <li><span class="ar">على الجوال: ادخل شبكة <b>Masar-Screen</b> (كلمة السر <b>masar2026</b>)، وافتح <b dir="ltr">http://192.168.4.1/?s=3</b>. الرقم 3 هو رقم الشاشة.</span><span class="en">On the phone: join the <b>Masar-Screen</b> Wi-Fi (password <b>masar2026</b>) and open <b dir="ltr">http://192.168.4.1/?s=3</b>. The 3 is the screen number.</span></li>
       </ol>
       <table>
-        <tr><td>M,&lt;seq&gt;,&lt;point&gt;,&lt;mode&gt;,&lt;arrows&gt;,&lt;defaults&gt;</td><td><span class="ar">سطر نصي واحد، 115200 baud</span><span class="en">one text line, 115200 baud</span></td></tr>
+        <tr><td>M,&lt;seq&gt;,&lt;point&gt;,&lt;mode&gt;,&lt;arrows&gt;,&lt;defaults&gt;,&lt;plan&gt;,&lt;plandefaults&gt;</td><td><span class="ar">سطر نصي واحد، 115200 baud</span><span class="en">one text line, 115200 baud</span></td></tr>
         <tr><td>point</td><td><span class="ar">نقطة التجمع النشطة: A أو B أو C، أو - إذا لا توجد نقطة آمنة</span><span class="en">active assembly point: A, B or C, or - when none is safe</span></td></tr>
         <tr><td>mode</td><td><span class="ar">N طبيعي · F حريق · E إخلاء</span><span class="en">N normal · F fire · E evacuation</span></td></tr>
         <tr><td>arrows</td><td><span class="ar">حرف لكل شاشة بالترتيب S1، S2…: U للأمام · R يمين · L يسار · D للخلف · X مغلق · O متوقفة</span><span class="en">one letter per screen in order S1, S2…: U ahead · R right · L left · D back · X closed · O off</span></td></tr>
         <tr><td>defaults</td><td><span class="ar">نفس الحروف لكن للمسار الافتراضي المعتمد: ما تعرضه الشاشة إذا انقطع الإرسال</span><span class="en">the same letters for the pre-approved default route: what a screen shows when frames stop</span></td></tr>
+        <tr><td>plan, plandefaults</td><td><span class="ar">نفس الشي لكن بنفس اتجاه السهم على المخطط (U = لفوق في المخطط). هذا اللي تعرضه صفحة الشاشة.</span><span class="en">the same, but as the arrow is drawn on the plan (U = up on the plan). This is what the screen page shows.</span></td></tr>
       </table>
       <p><b><span class="ar">كود شاشة LED عبر USB (Arduino)</span><span class="en">LED matrix over USB (Arduino)</span></b></p>
       <pre id="hwCode">// Masar floor screen: reference sketch for ESP32 (Arduino core), LED matrix over USB.
 // One ESP32 per screen. MY_ID = the screen number shown on the panel (S1 = 1).
-// Frame from the panel: M,&lt;seq&gt;,&lt;point&gt;,&lt;mode&gt;,&lt;arrows&gt;,&lt;defaults&gt;
+// Frame from the panel: M,&lt;seq&gt;,&lt;point&gt;,&lt;mode&gt;,&lt;arrows&gt;,&lt;defaults&gt;,&lt;plan&gt;,&lt;plandefaults&gt;
 const int  MY_ID = 1;
+const bool PLAN_VIEW = true;        // true: same direction as the panel's plan; false: as the walker facing the screen sees it
 const unsigned long TIMEOUT_MS = 3000;
 
 char shown = 0, defaultArrow = &#x27;U&#x27;;   // defaultArrow is refreshed from every frame
@@ -496,7 +498,7 @@ void loop() {
     char c = Serial.read();
     if (c == &#x27;\n&#x27;) {
       if (line.startsWith(&quot;M,&quot;)) {
-        String arrows = field(line, 4), defs = field(line, 5);
+        String arrows = field(line, PLAN_VIEW ? 6 : 4), defs = field(line, PLAN_VIEW ? 7 : 5);
         if ((int)defs.length() &gt;= MY_ID) defaultArrow = defs[MY_ID - 1];
         if ((int)arrows.length() &gt;= MY_ID) { drawArrow(arrows[MY_ID - 1]); lastFrame = millis(); }
       }
@@ -1459,8 +1461,10 @@ void loop() {
   /* real hardware: send every screen's arrow to an ESP32 over USB (Web Serial) */
   let port = null, writer = null, seq = 0;
   const enc = new TextEncoder();
-  // one line per update: M,<seq>,<point>,<mode>,<arrows>,<defaults>  (arrows = what each screen shows now, defaults = its pre-approved fallback)
-  function hwFrame(st) { const m = fires.length ? 'F' : (walkers && !walkers.done) ? 'E' : 'N', rel = d => SCR.map((s, i) => relArrow(d[i], s[2])).join(''); return `M,${seq++ % 10000},${st.active || '-'},${m},${rel(st.dirs)},${rel(st.dirsStatic)}`; }
+  // one line per update: M,<seq>,<point>,<mode>,<arrows>,<defaults>,<plan>,<plandefaults>
+  // arrows/defaults = as the walker facing the screen sees it; plan/plandefaults = as drawn on the panel's plan (U = up on the plan)
+  const PLAN = { N: 'U', E: 'R', S: 'D', W: 'L', X: 'X', O: 'O' };
+  function hwFrame(st) { const m = fires.length ? 'F' : (walkers && !walkers.done) ? 'E' : 'N', rel = d => SCR.map((s, i) => relArrow(d[i], s[2])).join(''), plan = d => d.map(x => PLAN[x] || 'U').join(''); return `M,${seq++ % 10000},${st.active || '-'},${m},${rel(st.dirs)},${rel(st.dirsStatic)},${plan(st.dirs)},${plan(st.dirsStatic)}`; }
   let bc = null; const seenScr = {};
   try { bc = new BroadcastChannel('masar-screen'); } catch (e) {}
   function pushFrame(st) {

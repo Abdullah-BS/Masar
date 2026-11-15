@@ -12,7 +12,7 @@
      The phone may say "no internet": stay connected.
 
   The page is stored in screen_page.h (generated from ../../screen.html by ../make_page.py).
-  Frames from the panel, one line each:  M,<seq>,<point>,<mode>,<arrows>,<defaults>
+  Frames from the panel, one line each:  M,<seq>,<point>,<mode>,<arrows>,<defaults>,<plan>,<plandefaults>
   If no frame arrives for 3 s, the page (and the optional LED matrix below) shows the default route.
 
   Status: written against the Arduino-ESP32 API but NOT yet run on a real board.
@@ -25,6 +25,7 @@
 const char* AP_SSID = "Masar-Screen";
 const char* AP_PASS = "masar2026";            // at least 8 characters
 const int   MY_ID = 1;                        // only for a physical LED matrix on this same board (optional)
+const bool  PLAN_VIEW = true;                 // matrix arrow: true = as on the panel's plan, false = as the walker sees it
 const unsigned long TIMEOUT_MS = 3000;
 
 WebServer server(80);
@@ -57,7 +58,7 @@ bool validFrame(const String& s) {            // only digits, capital letters, c
 
 void onFrame(const String& f) {
   latest = f; lastFrame = millis(); haveFrame = true;
-  String arrows = field(f, 4), defs = field(f, 5);
+  String arrows = field(f, PLAN_VIEW ? 6 : 4), defs = field(f, PLAN_VIEW ? 7 : 5);
   if ((int)defs.length() >= MY_ID) defaultArrow = defs[MY_ID - 1];
   if ((int)arrows.length() >= MY_ID) drawArrow(arrows[MY_ID - 1]);
 }

@@ -33,8 +33,10 @@ canvas{display:block;border-radius:1vmin;background:#050305}
 <p class="sr" id="live" aria-live="polite"></p>
 <script>
 /* Masar screen: one floor screen, mirrored from the control panel.
-   Frames arrive from the panel as one text line: M,<seq>,<point>,<mode>,<arrows>,<defaults>
-   - arrows / defaults: one letter per screen (U ahead, R right, L left, D back, X closed, O off)
+   Frames arrive from the panel as one text line: M,<seq>,<point>,<mode>,<arrows>,<defaults>,<plan>,<plandefaults>
+   - one letter per screen (U, R, L, D, X closed, O off). arrows/defaults are as the walker facing the screen sees them;
+     plan/plandefaults are as the arrow is drawn on the panel's plan. This page shows the plan letters, like the panel,
+     unless ?face=walker.
    - this page shows letter number ?s=N. Sources: BroadcastChannel (same computer) and, when this
      page is served by the ESP32, polling its /f endpoint. No frames for 3 s -> default route, amber. */
 (() => {
@@ -43,6 +45,7 @@ canvas{display:block;border-radius:1vmin;background:#050305}
   const lang = q.get('lang') === 'en' ? 'en' : 'ar';
   const T = (a, e) => lang === 'ar' ? a : e;
   const TIMEOUT = Math.max(1, Number(q.get('timeout')) || 3) * 1000;
+  const WALKER = q.get('face') === 'walker';      // default: same direction as the arrow on the panel's plan
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const $ = id => document.getElementById(id);
   if (lang === 'en') { document.documentElement.lang = 'en'; document.documentElement.dir = 'ltr'; }
@@ -55,7 +58,8 @@ canvas{display:block;border-radius:1vmin;background:#050305}
   function onFrame(f, at) {
     const p = String(f).trim().split(',');
     if (p[0] !== 'M' || p.length < 5) return;
-    got = { seq: +p[1], point: p[2], mode: p[3], arrows: p[4], defaults: p[5] || '', at: at == null ? performance.now() : at };
+    const plan = !WALKER && p.length >= 8;
+    got = { seq: +p[1], point: p[2], mode: p[3], arrows: plan ? p[6] : p[4], defaults: (plan ? p[7] : p[5]) || '', at: at == null ? performance.now() : at };
     update();
   }
   let bc = null;
