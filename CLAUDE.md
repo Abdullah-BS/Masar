@@ -4,7 +4,7 @@ Read this file first in every session and follow its rules.
 
 Owner: Abdullah Binsalman (GitHub `Abdullah-BS`), ElectroFusion.
 Repo: `Abdullah-BS/Masar` (not renamed; keep the capital M). Live site (GitHub Pages, `main` / root): `https://abdullah-bs.github.io/Masar/` (the lowercase `/masar/` returns 404).
-Site files: `index.html` (self-contained), `masar_story.mp4` (720p story video), `poster.jpg` (video poster).
+Site files: `index.html` (the control panel site, self-contained), `screen.html` (one standalone screen that mirrors a screen of the panel; see "Screen page"), `esp32/` (ESP32 sketch + page generator), `masar_story.mp4` and `poster.jpg` (no longer used by the page).
 
 ## What Masar is
 
@@ -39,7 +39,7 @@ Site files: `index.html` (self-contained), `masar_story.mp4` (720p story video),
 4. Never invent statistics. Every market or price figure keeps a visible «تقدير» / "estimate" label. Official figures keep their source.
 5. Do not claim regulations mandate Masar. Say it is a technical way to strengthen compliance with escape-route requirements.
 6. Do not say "no competitors exist". Say the core technology exists for fixed buildings, and we found no product combining live guidance, portability between sites and detector-driven rerouting.
-7. Keep the site a single self-contained `index.html` (inline CSS and JS) plus the video and poster. Only external loads: Google Fonts, and three.js r128 loaded lazily when the 3D view opens.
+7. Keep `index.html` a single self-contained file (inline CSS and JS). Only external loads: Google Fonts, and three.js r128 loaded lazily when the 3D view opens. `screen.html` is also self-contained and makes NO external requests (the ESP32 serves it on a Wi-Fi network with no internet).
 8. It must work at phone width (about 400px) with no horizontal scroll, in light and dark mode, and respect `prefers-reduced-motion`.
 
 ## Site structure (`index.html`)
@@ -69,8 +69,17 @@ The page presents Masar as an operator console that could run a real site, in de
 - Clicking a tile or a screen on the plan selects it (`sel`) and opens the inspector `#insp` under the control card: what the worker sees (`#inspDir`), where it leads, `#inspBlink` (flash to find), `#inspOff` (out of service → direction `'O'`), `#inspDel` (move tool only).
 - Move tool (`edit`): drag a screen to move it, click a walkway to add one (max 14), delete from the inspector (min 2). `autoSide` puts the sign at the nearer edge and faces it toward people walking the current route. Layout is saved per map in `localStorage` `masar-layout-<map>`; `#layoutReset` restores the original. Last map is saved in `masar-map`.
 - Auto demo (`tourStart`, 45 s, 7 steps): normal → move the point → fire (`presetFire`) → barrier closure (`presetClose`) → evacuation → connection lost → restored. Caption `#tourCap` shows the step number `#tourN`, the text `#tourTxt` and a progress line `#tourBar`; the button turns into "stop".
-- Real hardware (`#hwDlg`, Web Serial, Chrome/Edge desktop): every 500 ms the panel sends one line at 115200 baud: `M,<seq>,<point>,<mode>,<arrows>` — point A/B/C or `-`, mode N/F/E, one letter per screen in order (U ahead, R right, L left, D back, X closed, O off; relative to the walker facing the front face). When the connection is "cut" the panel stops sending, so real screens time out (3 s) and fall back to their default arrow. The dialog shows the live frame and a reference ESP32 sketch. The sketch has NOT been run on real hardware; the serial path is tested only with a fake port.
+- Linking screens (`#hwBtn` "Connect screens" → dialog `#hwDlg`). The panel produces one frame on every state change (immediately, `pushFrame`) plus a 500 ms heartbeat, and sends it to every link that is open: `M,<seq>,<point>,<mode>,<arrows>,<defaults>` — point A/B/C or `-`, mode N/F/E, `arrows` = one letter per screen in order (U ahead, R right, L left, D back, X closed, O off; relative to the walker facing the front face), `defaults` = the same letters for the pre-approved default route (`dirsStatic`, what a screen shows when it loses the link). When the connection is "cut" the panel sends nothing, so screens time out after 3 s and fall back to their defaults in amber.
+  - Link 1, same computer: `BroadcastChannel('masar-screen')`. The dialog opens `screen.html?s=N` windows (`#scrPick`, `#scrOpen`); each window sends `{hello: N}` every second so the panel lists open windows (`#scrSt`) and the status tag `#srcTag` shows "Linked: N screen windows".
+  - Link 2, Web Serial to an ESP32 (`#hwConnect`, Chrome/Edge desktop, 115200 baud). The ESP32 sketch `esp32/masar_screen/masar_screen.ino` turns the USB frames into its own Wi-Fi network (`Masar-Screen`, password `masar2026`) and serves `screen.html` at `http://192.168.4.1/?s=3` with the latest frame at `/f` (JSON `{f, age}`), polled every 250 ms by the page. The page cannot come from GitHub for this link (an https page may not call a local http device). Regenerate `esp32/masar_screen/screen_page.h` with `python3 esp32/make_page.py` after any change to `screen.html`.
+  - The dialog also holds a short LED-matrix-over-USB reference sketch. NEITHER sketch has been run on a real board. The ESP32 sketch compiles and passes its logic tests only against an Arduino mock; the serial path is tested with a fake port and a fake ESP32 HTTP server.
 - Removed on request (do not bring back): battery percentages, alarm sound, the preset incident buttons ("fire at the welding area", "close middle walkway"), the sensors-alerting counter. On screens narrower than 1100px the order is map → controls → inspector → screens → log.
+
+## Screen page (`screen.html`)
+
+A single floor screen as its own page: a 32 x 18 LED matrix, the arrow drawn the same way as on the panel (green, red X blinking, amber for the default route, blank when out of service). `?s=N` picks the screen (S1…), `?lang=en`, `?clean=1` hides the label and chip, `?timeout=S` changes the 3 s fail-safe, `?poll=1` (or `?poll=http://host`) forces polling of `/f`. Polling also turns on by itself when the page is served over http from an IP or `.local` host that is not 127.0.0.1. States on `document.body.dataset`: `state` (`wait` / `live` / `stale` / `nosuch`), `rel` (the letter shown), `sid`; tests read these. Tap or press F for full screen; it keeps the screen awake. Frames older than the timeout switch to the `defaults` letter in amber with "No signal · default route".
+
+Tests (scratchpad scripts, rerun after changing the link): two-window test with 8 windows compared screen by screen against the panel's inspector in four situations (normal, point change, fire, link cut), latency (~0.5 s including the click), and a fake ESP32 HTTP server fed by a fake serial port (live, point change, fire, 3 s silence → amber, restored). A side-by-side preview page (`duo.html`, panel + floating screen in iframes) lives only in the scratchpad, not in the repo.
 
 ## Simulator (`#sim`)
 

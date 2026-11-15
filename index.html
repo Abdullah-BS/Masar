@@ -207,6 +207,11 @@ dialog.hw::backdrop{background:rgba(8,2,5,.7);backdrop-filter:blur(3px)}
 .hw-in h3 button{background:none;border:none;color:#B9A6AE;font-size:26px;line-height:1;cursor:pointer}
 .hw-in p,.hw-in li{color:#C9B8BF;font-size:15px}
 .hw-in ol{margin:0;padding-inline-start:20px;display:grid;gap:4px}
+.hw-card{background:#1D0C15;border:1px solid #3A2230;border-radius:14px;padding:14px;display:grid;gap:10px}
+.hw-card h4{margin:0;font:600 17px var(--ff-display)}
+.hw-in select{font:500 15px var(--ff-body);color:#F3ECEF;background:#0B0508;border:1px solid #3A2230;border-radius:10px;padding:10px 12px}
+.hw-in label{font-size:14px;color:#B9A6AE}
+.hw-in b{color:#F3ECEF}
 .hw-row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
 .hw-row .act{flex:0 0 auto;padding-inline:18px}
 .hw-row .act.primary{flex-basis:auto;padding-block:11px;font-size:15px}
@@ -398,7 +403,7 @@ footer::before{content:"";position:absolute;width:900px;height:70px;background:#
                 <button type="button" class="act" id="clearBtn"><span class="ar">إنهاء الحادثة</span><span class="en">End incident</span></button>
               </div></div>
             <div class="grp tools2">
-              <button type="button" class="act quiet" id="hwBtn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21V8M12 8l-3 3M12 8l3 3M12 3v2M8 15h8M8 15v-3M16 15v-2"/><circle cx="12" cy="4" r="1.3"/></svg><span class="ar">ربط النموذج</span><span class="en">Connect model</span></button>
+              <button type="button" class="act quiet" id="hwBtn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21V8M12 8l-3 3M12 8l3 3M12 3v2M8 15h8M8 15v-3M16 15v-2"/><circle cx="12" cy="4" r="1.3"/></svg><span class="ar">ربط الشاشات</span><span class="en">Connect screens</span></button>
               <button type="button" class="act quiet" id="fsBtn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><span class="ar">ملء الشاشة</span><span class="en">Fullscreen</span></button>
             </div>
           </div>
@@ -423,69 +428,87 @@ footer::before{content:"";position:absolute;width:900px;height:70px;background:#
 
 <dialog class="hw" id="hwDlg" aria-labelledby="hwT">
   <div class="hw-in">
-    <h3 id="hwT"><span><span class="ar">ربط شاشات النموذج الحقيقية</span><span class="en">Connect the real model screens</span></span><button type="button" id="hwX" aria-label="Close">×</button></h3>
-    <p><span class="ar">اللوحة ترسل اتجاه كل شاشة إلى ESP32 عبر كيبل USB، مرتين في الثانية. إذا انقطع الإرسال 3 ثوانٍ، ترجع الشاشة لوحدها إلى مسارها الافتراضي: نفس منطق الفشل الآمن.</span><span class="en">The panel sends every screen's arrow to an ESP32 over a USB cable, twice a second. If frames stop for 3 seconds, the screen falls back to its default route on its own: the same fail-safe logic.</span></p>
-    <ol>
-      <li><span class="ar">ارفع الكود المرجعي أدناه على ESP32 ووصّله بالكمبيوتر.</span><span class="en">Flash the reference sketch below to an ESP32 and plug it into the computer.</span></li>
-      <li><span class="ar">افتح الصفحة من Chrome أو Edge على الكمبيوتر، واضغط «اتصال عبر USB».</span><span class="en">Open this page in Chrome or Edge on a computer and press "Connect over USB".</span></li>
-      <li><span class="ar">غيّر نقطة التجمع أو حاكِ حريقاً، وشوف الشاشة الحقيقية تتبدل.</span><span class="en">Change the assembly point or simulate a fire, and watch the real screen change.</span></li>
-    </ol>
-    <div class="hw-row">
-      <button type="button" class="act primary" id="hwConnect"><span class="ar">اتصال عبر USB</span><span class="en">Connect over USB</span></button>
-      <button type="button" class="act" id="hwDisconnect" hidden><span class="ar">قطع الاتصال بالنموذج</span><span class="en">Disconnect model</span></button>
-      <span class="hw-st" id="hwSt"></span>
+    <h3 id="hwT"><span><span class="ar">ربط الشاشات</span><span class="en">Connect screens</span></span><button type="button" id="hwX" aria-label="Close">×</button></h3>
+    <div class="hw-card">
+      <h4><span class="ar">شاشة في نافذة ثانية</span><span class="en">Screen in a second window</span></h4>
+      <p><span class="ar">نافذة تعرض شاشة واحدة من اللوحة، وتتبدل معها في نفس اللحظة. تشتغل على نفس الكمبيوتر بدون أي جهاز.</span><span class="en">A window that shows one screen of the panel and changes with it at the same moment. Works on this computer with no hardware.</span></p>
+      <div class="hw-row">
+        <label for="scrPick"><span class="ar">الشاشة</span><span class="en">Screen</span></label><select id="scrPick"></select>
+        <button type="button" class="act primary" id="scrOpen"><span class="ar">افتح الشاشة</span><span class="en">Open the screen</span></button>
+        <span class="hw-st" id="scrSt"></span>
+      </div>
     </div>
-    <p><b><span class="ar">الإطار المرسل الآن</span><span class="en">Frame being sent now</span></b></p>
-    <pre class="frame" id="hwFrame"></pre>
-    <table>
-      <tr><td>M,&lt;seq&gt;,&lt;point&gt;,&lt;mode&gt;,&lt;arrows&gt;</td><td><span class="ar">سطر نصي واحد، 115200 baud</span><span class="en">one text line, 115200 baud</span></td></tr>
-      <tr><td>point</td><td><span class="ar">نقطة التجمع النشطة: A أو B أو C، أو - إذا لا توجد نقطة آمنة</span><span class="en">active assembly point: A, B or C, or - when none is safe</span></td></tr>
-      <tr><td>mode</td><td><span class="ar">N طبيعي · F حريق · E إخلاء</span><span class="en">N normal · F fire · E evacuation</span></td></tr>
-      <tr><td>arrows</td><td><span class="ar">حرف لكل شاشة بالترتيب S1، S2…: U للأمام · R يمين · L يسار · D للخلف · X مغلق · O متوقفة</span><span class="en">one letter per screen in order S1, S2…: U ahead · R right · L left · D back · X closed · O off</span></td></tr>
-    </table>
+    <div class="hw-card">
+      <h4><span class="ar">ESP32 عبر USB</span><span class="en">ESP32 over USB</span></h4>
+      <p><span class="ar">ترسل اللوحة اتجاه كل شاشة إلى ESP32 مع كل تغيير. وإذا انقطع الإرسال 3 ثوانٍ، ترجع الشاشة لوحدها إلى مسارها الافتراضي.</span><span class="en">The panel sends every screen's arrow to the ESP32 on every change. If frames stop for 3 seconds, the screen falls back to its default route by itself.</span></p>
+      <div class="hw-row">
+        <button type="button" class="act primary" id="hwConnect"><span class="ar">اتصال عبر USB</span><span class="en">Connect over USB</span></button>
+        <button type="button" class="act" id="hwDisconnect" hidden><span class="ar">قطع الاتصال بالـESP32</span><span class="en">Disconnect the ESP32</span></button>
+        <span class="hw-st" id="hwSt"></span>
+      </div>
+      <pre class="frame" id="hwFrame"></pre>
+    </div>
     <details>
-      <summary><span class="ar">كود ESP32 المرجعي (Arduino)</span><span class="en">ESP32 reference sketch (Arduino)</span></summary>
-      <pre id="hwCode">// Masar floor screen: reference sketch for ESP32 (Arduino core).
-// One ESP32 per screen. Set MY_ID to the screen number shown on the panel (S1 = 1).
-// Put your LED matrix drawing code inside drawArrow().
-const int  MY_ID         = 1;
-const char DEFAULT_ARROW = 'U';     // pre-approved default route for this screen
+      <summary><span class="ar">جهاز ثاني (جوال أو تابلت) والكود</span><span class="en">A second device (phone or tablet) and the code</span></summary>
+      <ol>
+        <li><span class="ar">ارفع الملف <b>esp32/masar_screen/masar_screen.ino</b> على ESP32.</span><span class="en">Flash <b>esp32/masar_screen/masar_screen.ino</b> to the ESP32.</span></li>
+        <li><span class="ar">وصّل الـESP32 بالكمبيوتر اللي عليه لوحة التحكم، واضغط «اتصال عبر USB» (Chrome أو Edge).</span><span class="en">Plug the ESP32 into the computer that runs the panel and press "Connect over USB" (Chrome or Edge).</span></li>
+        <li><span class="ar">على الجوال: ادخل شبكة <b>Masar-Screen</b> (كلمة السر <b>masar2026</b>)، وافتح <b dir="ltr">http://192.168.4.1/?s=3</b>. الرقم 3 هو رقم الشاشة.</span><span class="en">On the phone: join the <b>Masar-Screen</b> Wi-Fi (password <b>masar2026</b>) and open <b dir="ltr">http://192.168.4.1/?s=3</b>. The 3 is the screen number.</span></li>
+      </ol>
+      <table>
+        <tr><td>M,&lt;seq&gt;,&lt;point&gt;,&lt;mode&gt;,&lt;arrows&gt;,&lt;defaults&gt;</td><td><span class="ar">سطر نصي واحد، 115200 baud</span><span class="en">one text line, 115200 baud</span></td></tr>
+        <tr><td>point</td><td><span class="ar">نقطة التجمع النشطة: A أو B أو C، أو - إذا لا توجد نقطة آمنة</span><span class="en">active assembly point: A, B or C, or - when none is safe</span></td></tr>
+        <tr><td>mode</td><td><span class="ar">N طبيعي · F حريق · E إخلاء</span><span class="en">N normal · F fire · E evacuation</span></td></tr>
+        <tr><td>arrows</td><td><span class="ar">حرف لكل شاشة بالترتيب S1، S2…: U للأمام · R يمين · L يسار · D للخلف · X مغلق · O متوقفة</span><span class="en">one letter per screen in order S1, S2…: U ahead · R right · L left · D back · X closed · O off</span></td></tr>
+        <tr><td>defaults</td><td><span class="ar">نفس الحروف لكن للمسار الافتراضي المعتمد: ما تعرضه الشاشة إذا انقطع الإرسال</span><span class="en">the same letters for the pre-approved default route: what a screen shows when frames stop</span></td></tr>
+      </table>
+      <p><b><span class="ar">كود شاشة LED عبر USB (Arduino)</span><span class="en">LED matrix over USB (Arduino)</span></b></p>
+      <pre id="hwCode">// Masar floor screen: reference sketch for ESP32 (Arduino core), LED matrix over USB.
+// One ESP32 per screen. MY_ID = the screen number shown on the panel (S1 = 1).
+// Frame from the panel: M,&lt;seq&gt;,&lt;point&gt;,&lt;mode&gt;,&lt;arrows&gt;,&lt;defaults&gt;
+const int  MY_ID = 1;
 const unsigned long TIMEOUT_MS = 3000;
 
-char shown = 0;
+char shown = 0, defaultArrow = &#x27;U&#x27;;   // defaultArrow is refreshed from every frame
 unsigned long lastFrame = 0;
 String line;
+
+String field(const String&amp; s, int n) {          // n-th comma separated field
+  int a = 0;
+  for (int i = 0; i &lt; n; i++) { a = s.indexOf(&#x27;,&#x27;, a); if (a &lt; 0) return &quot;&quot;; a++; }
+  int b = s.indexOf(&#x27;,&#x27;, a);
+  return b &lt; 0 ? s.substring(a) : s.substring(a, b);
+}
 
 void drawArrow(char a) {            // U R D L = arrow, X = closed, O = off
   if (a == shown) return;
   shown = a;
   // TODO: draw `a` on your LED matrix here
-  Serial.printf("S%d -> %c\n", MY_ID, a);
 }
 
 void setup() {
   Serial.begin(115200);
-  drawArrow(DEFAULT_ARROW);
+  drawArrow(defaultArrow);
 }
 
 void loop() {
   while (Serial.available()) {
     char c = Serial.read();
-    if (c == '\n') {                // M,&lt;seq&gt;,&lt;point&gt;,&lt;mode&gt;,&lt;arrows&gt;
-      int p = line.lastIndexOf(',');
-      if (line.startsWith("M,") &amp;&amp; p &gt; 0 &amp;&amp; (int)line.length() &gt; p + MY_ID) {
-        drawArrow(line[p + MY_ID]);
-        lastFrame = millis();
+    if (c == &#x27;\n&#x27;) {
+      if (line.startsWith(&quot;M,&quot;)) {
+        String arrows = field(line, 4), defs = field(line, 5);
+        if ((int)defs.length() &gt;= MY_ID) defaultArrow = defs[MY_ID - 1];
+        if ((int)arrows.length() &gt;= MY_ID) { drawArrow(arrows[MY_ID - 1]); lastFrame = millis(); }
       }
-      line = "";
-    } else if (c != '\r') {
+      line = &quot;&quot;;
+    } else if (c != &#x27;\r&#x27;) {
       line += c;
     }
   }
-  if (millis() - lastFrame &gt; TIMEOUT_MS) drawArrow(DEFAULT_ARROW);   // fail-safe
+  if (millis() - lastFrame &gt; TIMEOUT_MS) drawArrow(defaultArrow);   // fail-safe
 }</pre>
+      <div class="hw-row"><button type="button" class="mini" id="hwCopy"><span class="ar">نسخ الكود</span><span class="en">Copy sketch</span></button><span class="hw-st"><span class="ar">الكودان مرجعيان ولم يُجرَّبا على لوحة حقيقية بعد.</span><span class="en">Both sketches are references and have not been run on a real board yet.</span></span></div>
     </details>
-    <div class="hw-row"><button type="button" class="mini" id="hwCopy"><span class="ar">نسخ الكود</span><span class="en">Copy sketch</span></button><span class="hw-st"><span class="ar">الكود مرجعي ولم يُجرَّب على لوحة حقيقية بعد.</span><span class="en">The sketch is a reference and has not been run on real hardware yet.</span></span></div>
   </div>
 </dialog>
 
@@ -826,7 +849,8 @@ void loop() {
       return dirAt(dist[active], x, y);
     });
     const routeD = linkDown ? distStatic : (active ? dist[active] : null);
-    state = { active, reason, dirs, routeD, dist, edges: routeEdges(routeD, dirs), synced: linkDown ? 0 : SCR.length };
+    const dirsStatic = SCR.map(([x, y], i) => (scrSt[i] && scrSt[i].off) ? 'O' : dirAt(distStatic, x, y));
+    state = { active, reason, dirs, dirsStatic, routeD, dist, edges: routeEdges(routeD, dirs), synced: linkDown ? 0 : SCR.length };
     return state;
   }
 
@@ -1366,6 +1390,7 @@ void loop() {
   let uiSt = null, uiLang = '', sysKey = '';
   function renderUI(st, t) {
     if (st !== uiSt || uiDirty || uiLang !== lang) {
+      if (st !== uiSt) pushFrame(st);
       uiSt = st; uiDirty = false; uiLang = lang;
       $('fleetN').textContent = `(${SCR.length})`;
       $('fleet').innerHTML = SCR.map((s, i) => { const d = st.dirs[i], cls = d === 'O' ? 'off' : d === 'X' ? 'x' : linkDown ? 'amber' : 'ok';
@@ -1434,10 +1459,38 @@ void loop() {
   /* real hardware: send every screen's arrow to an ESP32 over USB (Web Serial) */
   let port = null, writer = null, seq = 0;
   const enc = new TextEncoder();
-  function hwFrame(st) { const m = fires.length ? 'F' : (walkers && !walkers.done) ? 'E' : 'N'; return `M,${seq++ % 10000},${st.active || '-'},${m},${SCR.map((s, i) => relArrow(st.dirs[i], s[2])).join('')}`; }
+  // one line per update: M,<seq>,<point>,<mode>,<arrows>,<defaults>  (arrows = what each screen shows now, defaults = its pre-approved fallback)
+  function hwFrame(st) { const m = fires.length ? 'F' : (walkers && !walkers.done) ? 'E' : 'N', rel = d => SCR.map((s, i) => relArrow(d[i], s[2])).join(''); return `M,${seq++ % 10000},${st.active || '-'},${m},${rel(st.dirs)},${rel(st.dirsStatic)}`; }
+  let bc = null; const seenScr = {};
+  try { bc = new BroadcastChannel('masar-screen'); } catch (e) {}
+  function pushFrame(st) {
+    if (linkDown) return;
+    const f = hwFrame(st); $('hwFrame').textContent = f;
+    if (bc) try { bc.postMessage({ f }); } catch (e) {}
+    if (writer) writer.write(enc.encode(f + '\n')).catch(() => hwDrop(false));
+  }
+  const linkedScreens = () => { const t = Date.now(); return Object.keys(seenScr).filter(k => t - seenScr[k] < 2600).map(Number).sort((a, b) => a - b); };
+  if (bc) bc.onmessage = e => { const d = e.data; if (d && d.hello) { seenScr[d.hello] = Date.now(); scrUI(); if (M) pushFrame(compute(now())); } };
   function hwStatus(msg, cls) { const el = $('hwSt'); el.textContent = msg; el.className = 'hw-st' + (cls ? ' ' + cls : ''); }
-  function hwUI() { const on = !!writer; $('hwConnect').hidden = on; $('hwDisconnect').hidden = !on; $('hwBtn').classList.toggle('on', on);
-    const tg = $('srcTag'); tg.classList.toggle('on', on); tg.textContent = on ? T('متصل بالنموذج عبر USB', 'Model connected over USB') : T('وضع تجريبي', 'Demo mode'); }
+  function tagUI() {
+    const parts = [], n = linkedScreens().length;
+    if (writer) parts.push(T('النموذج عبر USB', 'model over USB'));
+    if (n) parts.push(T(`${n} شاشة مفتوحة`, `${n} screen window${n > 1 ? 's' : ''}`));
+    const tg = $('srcTag'); tg.classList.toggle('on', parts.length > 0); tg.textContent = parts.length ? T('متصل: ', 'Linked: ') + parts.join(' + ') : T('وضع تجريبي', 'Demo mode');
+    $('hwBtn').classList.toggle('on', parts.length > 0);
+  }
+  function scrUI() {
+    const l = linkedScreens(), el = $('scrSt'); el.className = 'hw-st' + (l.length ? ' ok' : '');
+    el.textContent = l.length ? T('مفتوحة: ', 'Open: ') + l.map(n => 'S' + n).join(' · ') : T('لا توجد نافذة مفتوحة بعد', 'No window open yet'); tagUI();
+  }
+  function hwUI() { const on = !!writer; $('hwConnect').hidden = on; $('hwDisconnect').hidden = !on; scrUI(); }
+  setInterval(scrUI, 1000);
+  function fillPick() { const el = $('scrPick'), cur = el.value; el.innerHTML = SCR.map((s, i) => `<option value="${i + 1}">S${i + 1}</option>`).join(''); el.value = sel >= 0 ? String(sel + 1) : (cur && +cur <= SCR.length ? cur : '1'); }
+  $('scrOpen').addEventListener('click', () => {
+    const n = $('scrPick').value || '1', w = window.open('screen.html?s=' + n + (lang === 'en' ? '&lang=en' : ''), 'masar-screen-' + n, 'width=960,height=600');
+    if (!w) { const el = $('scrSt'); el.className = 'hw-st err'; el.textContent = T('المتصفح منع النافذة. اسمح بالنوافذ المنبثقة لهذا الموقع.', 'The browser blocked the window. Allow pop-ups for this site.'); }
+    else log(T(`فُتحت نافذة الشاشة S${n}`, `Screen window S${n} opened`));
+  });
   async function hwDrop(quiet) { const w = writer, p = port; writer = null; port = null; try { if (w) w.releaseLock(); } catch (e) {} try { if (p) await p.close(); } catch (e) {} hwUI(); if (!quiet) { hwStatus(T('انفصل النموذج', 'Model disconnected'), 'err'); log(T('انفصل النموذج عن اللوحة', 'The model was disconnected from the panel')); } }
   $('hwConnect').addEventListener('click', async () => {
     if (!('serial' in navigator)) { hwStatus(T('هذا المتصفح لا يدعم الربط عبر USB. استخدم Chrome أو Edge على الكمبيوتر.', 'This browser cannot connect over USB. Use Chrome or Edge on a computer.'), 'err'); return; }
@@ -1449,8 +1502,8 @@ void loop() {
   if ('serial' in navigator) navigator.serial.addEventListener('disconnect', e => { if (port && e.target === port) hwDrop(false); });
   setInterval(() => { if (!M) return; const st = compute(now());
     if (linkDown) { $('hwFrame').textContent = T('لا إرسال: الاتصال مقطوع، والشاشات على مسارها الافتراضي', 'Nothing sent: connection cut, screens on their default route'); return; }
-    const f = hwFrame(st); $('hwFrame').textContent = f; if (writer) writer.write(enc.encode(f + '\n')).catch(() => hwDrop(false)); }, 500);
-  $('hwBtn').addEventListener('click', () => { const d = $('hwDlg'); if (d.showModal) d.showModal(); else d.setAttribute('open', ''); });
+    pushFrame(st); }, 500);
+  $('hwBtn').addEventListener('click', () => { fillPick(); const d = $('hwDlg'); if (d.showModal) d.showModal(); else d.setAttribute('open', ''); });
   $('hwX').addEventListener('click', () => $('hwDlg').close());
   $('hwDlg').addEventListener('click', e => { if (e.target === $('hwDlg')) $('hwDlg').close(); });
   $('hwCopy').addEventListener('click', e => { const b = e.currentTarget, o = b.innerHTML, txt = $('hwCode').textContent; const done = () => { b.textContent = T('تم النسخ', 'Copied'); setTimeout(() => { b.innerHTML = o; }, 1400); };
