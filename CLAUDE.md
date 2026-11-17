@@ -4,7 +4,7 @@ Read this file first in every session and follow its rules.
 
 Owner: Abdullah Binsalman (GitHub `Abdullah-BS`), ElectroFusion.
 Repo: `Abdullah-BS/Masar` (not renamed; keep the capital M). Live site (GitHub Pages, `main` / root): `https://abdullah-bs.github.io/Masar/` (the lowercase `/masar/` returns 404).
-Site files: `index.html` (the control panel site, self-contained), `screen.html` (one standalone screen that mirrors a screen of the panel; see "Screen page"), `esp32/` (ESP32 sketch + page generator), `masar_story.mp4` and `poster.jpg` (no longer used by the page).
+Site files: `index.html` (the control panel site, self-contained), `electrofusion/index.html` (the ElectroFusion company site, see "Company site"), `screen.html` (one standalone screen that mirrors a screen of the panel; see "Screen page"), `esp32/` (ESP32 sketch + page generator), `masar_story.mp4` and `poster.jpg` (no longer used by the page).
 
 ## What Masar is
 
@@ -41,6 +41,10 @@ Site files: `index.html` (the control panel site, self-contained), `screen.html`
 6. Do not say "no competitors exist". Say the core technology exists for fixed buildings, and we found no product combining live guidance, portability between sites and detector-driven rerouting.
 7. Keep `index.html` a single self-contained file (inline CSS and JS). Only external loads: Google Fonts, and three.js r128 loaded lazily when the 3D view opens. `screen.html` is also self-contained and makes NO external requests (the ESP32 serves it on a Wi-Fi network with no internet).
 8. It must work at phone width (about 400px) with no horizontal scroll, in light and dark mode, and respect `prefers-reduced-motion`.
+
+## Company site (`electrofusion/index.html`)
+
+Live at `https://abdullah-bs.github.io/Masar/electrofusion/`. A simple company page for ElectroFusion in the same identity, self-contained (Google Fonts only), Arabic RTL by default with an English toggle (`localStorage` key `ef-lang`), light and dark mode. Sections: hero (tagline «ما نبيع دوائر… بل نرسم المستقبل», current pulses running along PCB traces into the LED-diode logo mark) → `#about` → `#services` (PCB design, electronics localization, IoT & automation, Efusion Store) → `#masar` (live LED sign on a floor stand cycling normal → point change → red X → amber fail-safe, link to the panel `../`) → `#how` (4 steps) → `#contact` (email + copy, X, Instagram, TikTok, and a form that opens a pre-filled `mailto:`; no backend). Facts come only from the brand template and the brief: English tagline "AI-Powered PCB Design & Electronics Localization", Efusion Store sells parts and beginner learning kits. No invented numbers, clients or team names. The logo is a white PNG used as a CSS mask (`--logo`, `--mark`), so it takes any colour. Edit the readable source in the scratchpad if present; otherwise edit the file directly (the two base64 masks are in `:root`).
 
 ## Site structure (`index.html`)
 
