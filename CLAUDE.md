@@ -41,6 +41,7 @@ Site files: `index.html` (the control panel site, self-contained), `electrofusio
 6. Do not say "no competitors exist". Say the core technology exists for fixed buildings, and we found no product combining live guidance, portability between sites and detector-driven rerouting.
 7. Keep `index.html` a single self-contained file (inline CSS and JS). Only external loads: Google Fonts, and three.js r128 loaded lazily when the 3D view opens. `screen.html` is also self-contained and makes NO external requests (the ESP32 serves it on a Wi-Fi network with no internet).
 8. It must work at phone width (about 400px) with no horizontal scroll, in light and dark mode, and respect `prefers-reduced-motion`.
+9. The Masar site (`index.html`) never shows or names fire sensors or detectors (حساس، كاشف، sensor, detector): the fire-detection hardware is not ours. A fire is simply "reported" / «بلاغ حريق». The routing logic is unchanged: `SENS` is still computed for the timing model, but `SHOW_SENS = false` and every drawing uses `SENS_VIS()` (empty), in 2D and 3D. No sensor legend item.
 
 ## Company site (`electrofusion/index.html`)
 
@@ -60,7 +61,7 @@ Sections in order (ids):
 
 1. Hero: logo, nav (control panel, prototype, contact, and «إلكتروفيوجن» → `electrofusion/` in a new tab), `#langBtn`, kicker with a «من إلكتروفيوجن» link, «مسار», one-line lede, CTAs (open the control panel → `#sim`; about the company → `electrofusion/`, new tab), and the animated LED sign on a stand (`#heroArrow`, `#heroLabel`, `#heroFoot`)
 2. `#sim` (class `stage`): the control panel `#cp` (see "Control panel" below)
-3. `#prototype`: annotated SVG of the floor screen (sun hood, LED matrix, ESP32, battery in base, weighted base; x3-5) and six component cards with drawings and quantities (ESP32, battery, control panel, fire detector, route-close button, 3 assembly point signs). Real photos replace the drawings later.
+3. `#prototype`: annotated SVG of the floor screen (sun hood, LED matrix, ESP32, battery in base, weighted base; x3-5) and six component cards with drawings and quantities (ESP32, battery, control panel, LED matrix, route-close button, 3 assembly point signs; the fire-detector card was removed under rule 9). Real photos replace the drawings later.
 4. Footer `#contact` (section 03): «تبغى مسار في موقعك؟», email link + `.copy` (`data-copy`, `#mail`), X / Instagram / TikTok links, and a company card linking to `electrofusion/` (new tab). No QR code (removed on request).
 
 Removed on purpose (kept in the pitch deck): story video, problem, solution, how it works, comparison, market, regulations, municipal, roadmap, FAQ, demo script, QR code. `masar_story.mp4` and `poster.jpg` are no longer used by the page.
